@@ -1,0 +1,31 @@
+# Maven Repository Data
+nexus-data/
+.nexus/
+
+# Environment
+.env
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Backups
+backups/
+*.tar.gz
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
