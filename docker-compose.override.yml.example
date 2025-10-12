@@ -1,0 +1,34 @@
+# Docker Compose override example for production deployment
+# Copy this file to docker-compose.override.yml and customize as needed
+
+services:
+  nexus:
+    # Increase memory for production workloads
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms2g -Xmx2g -XX:MaxDirectMemorySize=2g
+    
+    # Add custom labels for monitoring
+    labels:
+      - "com.example.environment=production"
+      - "com.example.service=maven-repository"
+    
+    # Configure logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Uncomment to use custom port
+    # ports:
+    #   - "9000:8081"
+    
+    # Uncomment to bind to specific network interface
+    # ports:
+    #   - "127.0.0.1:8081:8081"
+
+# Uncomment to use external network
+# networks:
+#   default:
+#     external:
+#       name: your-network-name

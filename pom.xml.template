@@ -1,0 +1,41 @@
+<!-- 
+  Sample POM configuration for deploying to DPC Maven Repository
+  Add this to your project's pom.xml
+-->
+
+<distributionManagement>
+  <repository>
+    <id>dpc-maven-repo-releases</id>
+    <name>DPC Maven Repository - Releases</name>
+    <url>http://localhost:8081/repository/maven-releases/</url>
+  </repository>
+  <snapshotRepository>
+    <id>dpc-maven-repo-snapshots</id>
+    <name>DPC Maven Repository - Snapshots</name>
+    <url>http://localhost:8081/repository/maven-snapshots/</url>
+  </snapshotRepository>
+</distributionManagement>
+
+<!-- Optional: Add repository for downloading from DPC Maven Repository -->
+<repositories>
+  <repository>
+    <id>dpc-maven-repo-releases</id>
+    <url>http://localhost:8081/repository/maven-releases/</url>
+    <releases>
+      <enabled>true</enabled>
+    </releases>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+  </repository>
+  <repository>
+    <id>dpc-maven-repo-snapshots</id>
+    <url>http://localhost:8081/repository/maven-snapshots/</url>
+    <releases>
+      <enabled>false</enabled>
+    </releases>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+  </repository>
+</repositories>

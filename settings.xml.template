@@ -1,0 +1,78 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  
+  <!-- 
+    Sample Maven Settings for DPC Maven Repository
+    Copy this to ~/.m2/settings.xml and update with your credentials
+  -->
+  
+  <servers>
+    <!-- Repository authentication -->
+    <server>
+      <id>dpc-maven-repo-releases</id>
+      <username>admin</username>
+      <password>CHANGE_ME</password>
+    </server>
+    <server>
+      <id>dpc-maven-repo-snapshots</id>
+      <username>admin</username>
+      <password>CHANGE_ME</password>
+    </server>
+  </servers>
+  
+  <mirrors>
+    <!-- Optional: Mirror Maven Central through your repository -->
+    <mirror>
+      <id>dpc-maven-repo</id>
+      <mirrorOf>central</mirrorOf>
+      <url>http://localhost:8081/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+  
+  <profiles>
+    <profile>
+      <id>dpc-maven-repo</id>
+      <repositories>
+        <repository>
+          <id>dpc-maven-repo-releases</id>
+          <url>http://localhost:8081/repository/maven-releases/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+        <repository>
+          <id>dpc-maven-repo-snapshots</id>
+          <url>http://localhost:8081/repository/maven-snapshots/</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>dpc-maven-repo-releases</id>
+          <url>http://localhost:8081/repository/maven-releases/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  
+  <activeProfiles>
+    <activeProfile>dpc-maven-repo</activeProfile>
+  </activeProfiles>
+  
+</settings>
