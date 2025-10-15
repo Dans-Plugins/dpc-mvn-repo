@@ -145,6 +145,44 @@ Nexus comes with several pre-configured repositories:
 - **maven-snapshots**: Hosted repository for snapshot artifacts
 - **maven-public**: Repository group combining all Maven repositories
 
+## Importing Artifacts
+
+You can import existing Maven artifacts from another repository or backup:
+
+### Quick Import
+
+```bash
+# Import from a local directory
+./import-artifacts.sh -p your-password /path/to/maven-repository
+
+# Import from a backup file
+./import-artifacts.sh -p your-password /path/to/backup.tar.gz
+
+# Using make
+make import SOURCE=/path/to/repository PASSWORD=your-password
+```
+
+### Get Admin Password
+
+```bash
+make password
+```
+
+### Import Examples
+
+```bash
+# Import releases
+./import-artifacts.sh -p admin123 /path/to/old-maven-repo
+
+# Import snapshots
+./import-artifacts.sh -p admin123 --snapshot /path/to/snapshots
+
+# Dry run (test without importing)
+./import-artifacts.sh -p admin123 --dry-run /path/to/repository
+```
+
+For detailed documentation on importing artifacts, including troubleshooting and advanced usage, see [docs/IMPORT.md](docs/IMPORT.md).
+
 ## Configuration
 
 ### Resource Limits

@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs status backup restore clean update
+.PHONY: help start stop restart logs status backup restore clean update import
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -66,3 +66,15 @@ password: ## Retrieve the initial admin password
 
 shell: ## Open a shell in the Nexus container
 	@docker exec -it dpc-maven-repo /bin/bash
+
+import: ## Import artifacts (Usage: make import SOURCE=path/to/repo PASSWORD=admin123)
+	@if [ -z "$(SOURCE)" ]; then \
+		echo "❌ Error: Please specify SOURCE=path/to/repo"; \
+		echo "Example: make import SOURCE=/path/to/old-repo PASSWORD=admin123"; \
+		exit 1; \
+	fi
+	@if [ -z "$(PASSWORD)" ]; then \
+		echo "❌ Error: Please specify PASSWORD=your-nexus-password"; \
+		exit 1; \
+	fi
+	@./import-artifacts.sh -p "$(PASSWORD)" $(SOURCE)
