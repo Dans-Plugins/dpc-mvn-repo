@@ -36,9 +36,14 @@ dpc-mvn-repo/
 ├── setup.sh                     # Setup automation
 ├── backup.sh                    # Backup automation
 ├── restore.sh                   # Restore automation
+├── import-artifacts.sh          # Artifact import tool
 ├── Makefile                     # Convenience commands
 ├── settings.xml.template        # Maven settings template
 ├── pom.xml.template             # POM configuration template
+├── docs/                        # Documentation
+│   ├── IMPORT.md                # Import guide
+│   ├── PRODUCTION.md            # Production guide
+│   └── TROUBLESHOOTING.md       # Troubleshooting guide
 └── README.md                    # Main documentation
 ```
 
@@ -74,7 +79,16 @@ Before submitting a PR:
    make backup
    ```
 
-5. Clean up test environment:
+5. Test import functionality (if applicable):
+   ```bash
+   # Test help output
+   ./import-artifacts.sh --help
+   
+   # Test dry-run
+   ./import-artifacts.sh -p test123 --dry-run /path/to/test-repo
+   ```
+
+6. Clean up test environment:
    ```bash
    make clean
    ```

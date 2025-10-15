@@ -90,11 +90,30 @@ make stop       # Stop the repository
 make status     # Check status
 make logs       # View logs
 make backup     # Create backup
+make import     # Import artifacts (requires SOURCE and PASSWORD)
 ```
+
+## Importing Existing Artifacts
+
+To migrate artifacts from an old repository:
+
+```bash
+# Get your admin password
+make password
+
+# Import from a directory
+./import-artifacts.sh -p your-password /path/to/old-repo
+
+# Import from a backup
+./import-artifacts.sh -p your-password /path/to/backup.tar.gz
+```
+
+See [Import Guide](docs/IMPORT.md) for detailed instructions.
 
 ## Need More Help?
 
 - 📖 [Full Documentation](README.md)
+- 📦 [Import Guide](docs/IMPORT.md)
 - 🚀 [Production Deployment](docs/PRODUCTION.md)
 - 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md)
 - 💬 [Contributing](CONTRIBUTING.md)
@@ -104,6 +123,7 @@ make backup     # Create backup
 - ✅ Sonatype Nexus Repository Manager OSS
 - ✅ Docker & Docker Compose setup
 - ✅ Automated backup & restore scripts
+- ✅ Artifact import tool for migration
 - ✅ Production-ready configuration examples
 - ✅ Comprehensive documentation
 

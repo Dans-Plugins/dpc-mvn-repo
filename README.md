@@ -130,10 +130,21 @@ docker-compose up -d
 
 ```
 dpc-mvn-repo/
-├── docker-compose.yml    # Docker Compose orchestration
-├── Dockerfile            # Custom Nexus image configuration
-├── .gitignore           # Git ignore rules
-└── README.md            # This file
+├── docker-compose.yml           # Docker Compose orchestration
+├── Dockerfile                   # Custom Nexus image configuration
+├── Makefile                     # Convenient management commands
+├── setup.sh                     # Initial setup script
+├── backup.sh                    # Backup automation
+├── restore.sh                   # Restore automation
+├── import-artifacts.sh          # Artifact import tool
+├── settings.xml.template        # Maven settings template
+├── pom.xml.template             # POM configuration template
+├── docs/                        # Documentation
+│   ├── IMPORT.md                # Import guide
+│   ├── PRODUCTION.md            # Production deployment
+│   └── TROUBLESHOOTING.md       # Troubleshooting guide
+├── .gitignore                   # Git ignore rules
+└── README.md                    # This file
 ```
 
 ## Default Repositories
