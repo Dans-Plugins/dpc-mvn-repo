@@ -85,28 +85,38 @@ mvn clean deploy
 ## Common Commands
 
 ```bash
-make start      # Start the repository
-make stop       # Stop the repository
-make status     # Check status
-make logs       # View logs
-make backup     # Create backup
-make import     # Import artifacts (requires SOURCE and PASSWORD)
+make start        # Start the repository
+make stop         # Stop the repository
+make status       # Check status
+make logs         # View logs
+make backup       # Create backup
+make import       # Import artifacts (requires SOURCE and PASSWORD)
+make quick-import # One-command import with auto-start (requires SOURCE only)
 ```
 
 ## Importing Existing Artifacts
 
-To migrate artifacts from an old repository:
+The easiest way to migrate artifacts from an old repository:
 
 ```bash
-# Get your admin password
-make password
+# One-command import - automatically handles everything!
+make quick-import SOURCE=/path/to/old-repo
 
-# Import from a directory
-./import-artifacts.sh -p your-password /path/to/old-repo
+# Or use the script with interactive password prompt
+./import-artifacts.sh /path/to/old-repo
 
-# Import from a backup
-./import-artifacts.sh -p your-password /path/to/backup.tar.gz
+# Auto-start container if needed
+./import-artifacts.sh --auto-start /path/to/old-repo
 ```
+
+### What Gets Automated
+
+When using `quick-import` or `--auto-start`:
+- ✅ Starts Nexus container if not running
+- ✅ Waits for Nexus to be ready
+- ✅ Retrieves admin password automatically
+- ✅ Shows progress with percentage and ETA
+- ✅ No manual steps required!
 
 See [Import Guide](docs/IMPORT.md) for detailed instructions.
 

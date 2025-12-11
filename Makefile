@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs status backup restore clean update import
+.PHONY: help start stop restart logs status backup restore clean update import quick-import
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -78,3 +78,12 @@ import: ## Import artifacts (Usage: make import SOURCE=path/to/repo PASSWORD=adm
 		exit 1; \
 	fi
 	@./import-artifacts.sh -p "$(PASSWORD)" $(SOURCE)
+
+quick-import: ## One-command import with auto-start (Usage: make quick-import SOURCE=path/to/repo)
+	@if [ -z "$(SOURCE)" ]; then \
+		echo "❌ Error: Please specify SOURCE=path/to/repo"; \
+		echo "Example: make quick-import SOURCE=/path/to/old-repo"; \
+		exit 1; \
+	fi
+	@echo "🚀 Starting quick import..."
+	@./import-artifacts.sh --auto-start $(SOURCE)

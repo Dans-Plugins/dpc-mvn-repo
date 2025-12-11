@@ -13,38 +13,61 @@ This is useful when migrating from an old Maven repository deployment to this ne
 
 ## Prerequisites
 
-- DPC Maven Repository running (`make start`)
-- Nexus admin password
+- DPC Maven Repository running (`make start`) - or use `--auto-start` to start automatically
+- Nexus admin password (optional - can be auto-retrieved or prompted)
 - Source artifacts in one of the supported formats
 
 ## Quick Start
 
+### One-Command Import (Easiest!)
+
+The simplest way to import - everything is automatic:
+
+```bash
+# Using make - just specify the source!
+make quick-import SOURCE=/path/to/maven-repository
+
+# Or use the script directly with auto-start
+./import-artifacts.sh --auto-start /path/to/maven-repository
+```
+
+This will:
+1. ✅ Start the Nexus container if not running
+2. ✅ Wait for Nexus to be ready
+3. ✅ Auto-retrieve the admin password from container
+4. ✅ Import all artifacts
+5. ✅ Show progress with percentage and ETA
+
 ### Import from Local Directory
 
 ```bash
-# Using the script directly
-./import-artifacts.sh -p your-password /path/to/maven-repository
+# Interactive password prompt (most secure)
+./import-artifacts.sh /path/to/maven-repository
 
-# Or using make
+# Or using make with password
 make import SOURCE=/path/to/maven-repository PASSWORD=your-password
 ```
 
 ### Import from Backup File
 
 ```bash
+# Auto-detect password
+./import-artifacts.sh /path/to/backup.tar.gz
+
+# Or provide password
 ./import-artifacts.sh -p your-password /path/to/backup.tar.gz
 ```
 
 ### Import to Snapshots Repository
 
 ```bash
-./import-artifacts.sh -p your-password --snapshot /path/to/snapshots
+./import-artifacts.sh --snapshot /path/to/snapshots
 ```
 
 ### Dry Run (Test Without Importing)
 
 ```bash
-./import-artifacts.sh -p your-password --dry-run /path/to/maven-repository
+./import-artifacts.sh --dry-run /path/to/maven-repository
 ```
 
 ## Import Script Options
@@ -55,27 +78,45 @@ Usage: ./import-artifacts.sh [OPTIONS] <source>
 OPTIONS:
     -h, --help              Show help message
     -u, --user USER         Nexus username (default: admin)
-    -p, --password PASS     Nexus password (required)
+    -p, --password PASS     Nexus password (prompts if not provided)
     -r, --repo REPO         Target repository (default: maven-releases)
     -n, --nexus-url URL     Nexus URL (default: http://localhost:8081)
     -t, --type TYPE         Import type: local, remote, or backup
     -s, --snapshot          Import to maven-snapshots
+    --auto-start            Auto-start Nexus container if not running
     --dry-run               Show what would be imported
+
+PASSWORD HANDLING:
+    If no password is provided, the script will:
+    1. Check NEXUS_PASSWORD environment variable
+    2. Try to retrieve default password from container
+    3. Prompt interactively (if running in terminal)
 ```
 
 ## Detailed Examples
 
-### Example 1: Basic Import
+### Example 1: Fully Automated Import
 
-Import all artifacts from a local Maven repository directory:
+The easiest way - everything is handled automatically:
 
 ```bash
-./import-artifacts.sh \
-    -p admin123 \
-    /home/user/.m2/repository
+# Using make
+make quick-import SOURCE=/home/user/.m2/repository
+
+# Using script
+./import-artifacts.sh --auto-start /home/user/.m2/repository
 ```
 
-### Example 2: Import to Custom Repository
+### Example 2: Interactive Import
+
+Let the script prompt for password (more secure):
+
+```bash
+./import-artifacts.sh /home/user/.m2/repository
+# Password prompt will appear
+```
+
+### Example 3: Import to Custom Repository
 
 Import to a specific repository (must exist in Nexus):
 

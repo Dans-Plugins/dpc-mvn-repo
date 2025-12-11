@@ -29,11 +29,12 @@ Import Maven artifacts from an existing repository or directory.
 OPTIONS:
     -h, --help              Show this help message
     -u, --user USER         Nexus username (default: admin)
-    -p, --password PASS     Nexus password (required)
+    -p, --password PASS     Nexus password (prompts if not provided)
     -r, --repo REPO         Target repository (default: maven-releases)
     -n, --nexus-url URL     Nexus URL (default: http://localhost:8081)
     -t, --type TYPE         Import type: local or remote (default: auto-detect)
     -s, --snapshot          Import to maven-snapshots instead
+    --auto-start            Auto-start Nexus container if not running
     --dry-run               Show what would be imported without uploading
 
 SOURCE:
@@ -42,23 +43,33 @@ SOURCE:
     - Backup file: /path/to/backup.tar.gz
 
 EXAMPLES:
-    # Import from local directory
+    # Import from local directory (interactive password prompt)
+    $0 /path/to/old-maven-repo
+
+    # Import with password provided
     $0 -p admin123 /path/to/old-maven-repo
 
-    # Import from remote repository
-    $0 -p admin123 https://old-repo.example.com/maven2/
+    # Auto-start container and import
+    $0 --auto-start /path/to/old-maven-repo
 
     # Import to snapshots repository
     $0 -p admin123 --snapshot /path/to/snapshots
 
     # Dry run to see what would be imported
-    $0 -p admin123 --dry-run /path/to/maven-repo
+    $0 --dry-run /path/to/maven-repo
 
 ENVIRONMENT VARIABLES:
     NEXUS_URL       Nexus repository URL
     NEXUS_USER      Nexus username
     NEXUS_PASSWORD  Nexus password (alternative to -p)
     NEXUS_REPO      Target repository name
+
+NOTES:
+    - If no password is provided, script will try to:
+      1. Use NEXUS_PASSWORD environment variable
+      2. Retrieve default password from container
+      3. Prompt interactively
+    - Use --auto-start to automatically start container if needed
 
 EOF
     exit 0
@@ -84,8 +95,35 @@ log_error() {
 # Check if container is running
 check_container() {
     if ! docker ps | grep -q "$CONTAINER_NAME"; then
-        log_error "Nexus container is not running. Start it with: make start"
-        exit 1
+        if [ "$AUTO_START" = "true" ]; then
+            log_info "Nexus container is not running. Starting it now..."
+            if command -v docker-compose &> /dev/null || docker compose version &> /dev/null; then
+                docker-compose up -d 2>/dev/null || docker compose up -d 2>/dev/null || {
+                    log_error "Failed to start container"
+                    exit 1
+                }
+                log_info "Waiting for Nexus to be ready..."
+                local max_wait=60
+                local waited=0
+                while [ $waited -lt $max_wait ]; do
+                    if docker exec "$CONTAINER_NAME" curl -sf http://localhost:8081 > /dev/null 2>&1; then
+                        log_success "Nexus is ready!"
+                        return 0
+                    fi
+                    sleep 2
+                    waited=$((waited + 2))
+                done
+                log_error "Nexus did not become ready in time"
+                exit 1
+            else
+                log_error "Docker Compose not found. Cannot auto-start container"
+                exit 1
+            fi
+        else
+            log_error "Nexus container is not running. Start it with: make start"
+            log_info "Or use --auto-start to start it automatically"
+            exit 1
+        fi
     fi
 }
 
@@ -125,6 +163,48 @@ verify_credentials() {
     log_success "Successfully authenticated with Nexus"
 }
 
+# Get password from container if not provided
+get_password_from_container() {
+    if [ -n "$NEXUS_PASSWORD" ]; then
+        return 0
+    fi
+    
+    log_info "No password provided, attempting to retrieve from container..."
+    
+    if docker exec "$CONTAINER_NAME" test -f /nexus-data/admin.password 2>/dev/null; then
+        NEXUS_PASSWORD=$(docker exec "$CONTAINER_NAME" cat /nexus-data/admin.password 2>/dev/null)
+        if [ -n "$NEXUS_PASSWORD" ]; then
+            log_success "Retrieved initial admin password from container"
+            log_warning "Remember to change the default password after first login!"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Prompt for password interactively
+prompt_for_password() {
+    if [ -n "$NEXUS_PASSWORD" ]; then
+        return 0
+    fi
+    
+    if [ -t 0 ]; then
+        # Running interactively
+        echo -n "Enter Nexus password: " >&2
+        read -s NEXUS_PASSWORD
+        echo "" >&2
+        
+        if [ -z "$NEXUS_PASSWORD" ]; then
+            log_error "Password cannot be empty"
+            exit 1
+        fi
+    else
+        log_error "Password required but not provided and cannot prompt (not interactive)"
+        exit 1
+    fi
+}
+
 # Import from local directory
 import_local_directory() {
     local source_dir="$1"
@@ -145,6 +225,9 @@ import_local_directory() {
     
     log_info "Found $total_files artifacts to import"
     
+    # Track start time for progress estimation
+    local start_time=$(date +%s)
+    
     # Process each POM file
     local current=0
     while IFS= read -r pom_file; do
@@ -161,8 +244,19 @@ import_local_directory() {
         local relative_path=${pom_file#$source_dir/}
         local artifact_info=$(extract_artifact_info "$relative_path")
         
+        # Calculate progress
+        local percent=$((current * 100 / total_files))
+        local elapsed=$(($(date +%s) - start_time))
+        local eta=""
+        if [ $current -gt 0 ] && [ $elapsed -gt 0 ]; then
+            local avg_time=$((elapsed / current))
+            local remaining=$((total_files - current))
+            local eta_seconds=$((avg_time * remaining))
+            eta=" (ETA: ${eta_seconds}s)"
+        fi
+        
         echo ""
-        log_info "[$current/$total_files] Processing: $relative_path"
+        log_info "[$current/$total_files - ${percent}%${eta}] Processing: $relative_path"
         
         if [ "$DRY_RUN" = "true" ]; then
             log_info "Would import: $artifact_info"
@@ -307,6 +401,7 @@ NEXUS_PASSWORD="${NEXUS_PASSWORD:-}"
 DRY_RUN=false
 IMPORT_TYPE=""
 SOURCE=""
+AUTO_START=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -337,6 +432,10 @@ while [[ $# -gt 0 ]]; do
             NEXUS_REPO="maven-snapshots"
             shift
             ;;
+        --auto-start)
+            AUTO_START=true
+            shift
+            ;;
         --dry-run)
             DRY_RUN=true
             shift
@@ -365,16 +464,24 @@ main() {
         usage
     fi
     
-    if [ -z "$NEXUS_PASSWORD" ]; then
-        log_error "Nexus password is required. Use -p option or set NEXUS_PASSWORD environment variable"
-        exit 1
-    fi
-    
     # Check dependencies
     check_dependencies
     
     # Check if container is running
     check_container
+    
+    # Handle password - try multiple methods
+    if [ -z "$NEXUS_PASSWORD" ]; then
+        # Try to get password from container
+        if ! get_password_from_container; then
+            # If that fails, prompt for password (unless dry-run)
+            if [ "$DRY_RUN" != "true" ]; then
+                prompt_for_password
+            else
+                log_warning "No password available, but dry-run mode doesn't need it"
+            fi
+        fi
+    fi
     
     # Verify credentials
     if [ "$DRY_RUN" != "true" ]; then

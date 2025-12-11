@@ -160,14 +160,29 @@ Nexus comes with several pre-configured repositories:
 
 You can import existing Maven artifacts from another repository or backup:
 
-### Quick Import
+### One-Command Import (Easiest)
+
+The easiest way to import - automatically starts the container and retrieves the password:
 
 ```bash
-# Import from a local directory
+# Just specify the source - everything else is automatic!
+make quick-import SOURCE=/path/to/maven-repository
+
+# Or use the script directly
+./import-artifacts.sh --auto-start /path/to/maven-repository
+```
+
+### Standard Import
+
+```bash
+# Import with interactive password prompt
+./import-artifacts.sh /path/to/maven-repository
+
+# Import with password provided
 ./import-artifacts.sh -p your-password /path/to/maven-repository
 
 # Import from a backup file
-./import-artifacts.sh -p your-password /path/to/backup.tar.gz
+./import-artifacts.sh /path/to/backup.tar.gz
 
 # Using make
 make import SOURCE=/path/to/repository PASSWORD=your-password
@@ -182,15 +197,26 @@ make password
 ### Import Examples
 
 ```bash
-# Import releases
-./import-artifacts.sh -p admin123 /path/to/old-maven-repo
+# Import releases (no password needed - auto-detected)
+./import-artifacts.sh /path/to/old-maven-repo
 
 # Import snapshots
-./import-artifacts.sh -p admin123 --snapshot /path/to/snapshots
+./import-artifacts.sh --snapshot /path/to/snapshots
 
 # Dry run (test without importing)
-./import-artifacts.sh -p admin123 --dry-run /path/to/repository
+./import-artifacts.sh --dry-run /path/to/repository
+
+# Auto-start container if needed
+./import-artifacts.sh --auto-start /path/to/repository
 ```
+
+### Key Features
+
+- 🔐 **Smart Password Handling**: Auto-retrieves from container or prompts interactively
+- 🚀 **Auto-Start**: Automatically starts Nexus if not running (use `--auto-start`)
+- 📊 **Progress Tracking**: Shows percentage complete and ETA during import
+- 🧪 **Dry Run**: Test imports without making changes
+- ✅ **Zero Configuration**: Just specify the source - everything else is automatic!
 
 For detailed documentation on importing artifacts, including troubleshooting and advanced usage, see [docs/IMPORT.md](docs/IMPORT.md).
 
