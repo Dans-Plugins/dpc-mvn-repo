@@ -51,6 +51,8 @@ on:
 
 jobs:
   build:
+    # Pin to a specific release tag or commit SHA for reproducible builds,
+    # e.g. reusable-build.yml@v1. @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-build.yml@main
     with:
       java-version: '17'
@@ -70,6 +72,8 @@ on:
 
 jobs:
   publish:
+    # Pin to a specific release tag or commit SHA for reproducible builds,
+    # e.g. reusable-publish.yml@v1. @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@main
     with:
       java-version: '17'
@@ -100,7 +104,7 @@ Add the `<distributionManagement>` block to your plugin's `pom.xml` (see [`pom.x
 </distributionManagement>
 ```
 
-> The CI workflow overrides the URL at deploy time with `-DaltDeploymentRepository`, so local builds that do not have `NEXUS_URL` set will fail gracefully at the `deploy` phase but succeed at `verify`.
+> The CI workflow overrides the URL at deploy time with `-DaltDeploymentRepository`. `NEXUS_URL` must be set as an environment variable for local deploys (`export NEXUS_URL=https://repo.dansplugins.com`); it is not needed for `mvn verify` (build & test only).
 
 ### 2c. Add the GitHub secrets
 

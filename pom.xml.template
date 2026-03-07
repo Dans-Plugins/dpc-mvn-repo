@@ -2,9 +2,9 @@
   Sample POM configuration for deploying to DPC Maven Repository.
   Add the sections below to your project's pom.xml as needed.
 
-  The <distributionManagement> URLs are overridden at CI build time via
-  the -DaltDeploymentRepository flag in the reusable-publish workflow, so
-  local builds without NEXUS_URL set will fall back to these defaults.
+  NEXUS_URL must be set (e.g. export NEXUS_URL=https://repo.dansplugins.com).
+  In CI the reusable-publish workflow overrides the URL at deploy time via
+  -DaltDeploymentRepository, so the value below is used only for local deploys.
 -->
 
 <!-- ================================================================== -->

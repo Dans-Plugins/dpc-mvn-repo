@@ -5,19 +5,17 @@
   
   <!-- 
     Sample Maven Settings for DPC Maven Repository
-    Copy this to ~/.m2/settings.xml and update with your credentials
+    Copy this to ~/.m2/settings.xml and update with your credentials.
+    The single server id 'dpc-maven-repo' covers both releases and snapshots
+    because the reusable-publish workflow routes to the correct repository via
+    -DaltDeploymentRepository at deploy time.
   -->
   
   <servers>
-    <!-- Repository authentication -->
+    <!-- Authentication for the DPC Maven Repository (releases & snapshots) -->
     <server>
-      <id>dpc-maven-repo-releases</id>
-      <username>admin</username>
-      <password>CHANGE_ME</password>
-    </server>
-    <server>
-      <id>dpc-maven-repo-snapshots</id>
-      <username>admin</username>
+      <id>dpc-maven-repo</id>
+      <username>CHANGE_ME</username>
       <password>CHANGE_ME</password>
     </server>
   </servers>

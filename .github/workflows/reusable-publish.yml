@@ -35,33 +35,29 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
+    # Expose credentials as env vars so Maven reads them from the environment
+    # rather than having them written verbatim into settings.xml (avoids XML
+    # injection when passwords contain special characters like & or <).
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # actions/setup-java generates ~/.m2/settings.xml with ${env.NEXUS_USERNAME}
+      # and ${env.NEXUS_PASSWORD} placeholders — Maven resolves them at runtime
+      # from the job-level env vars above, keeping credentials out of the XML file.
       - name: Set up Java ${{ inputs.java-version }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
           cache: maven
-
-      - name: Configure Maven settings
-        # The server <id> below must match the <id> in the calling plugin's
-        # <distributionManagement> block (see pom.xml.template).
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<'EOF'
-          <settings>
-            <servers>
-              <server>
-                <id>dpc-maven-repo</id>
-                <username>${{ secrets.NEXUS_USERNAME }}</username>
-                <password>${{ secrets.NEXUS_PASSWORD }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
+          server-id: dpc-maven-repo
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
 
       - name: Determine target repository
         id: repo

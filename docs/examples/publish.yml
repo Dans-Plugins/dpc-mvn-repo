@@ -8,6 +8,11 @@
 #   NEXUS_USERNAME  — Nexus deploy username
 #   NEXUS_PASSWORD  — Nexus deploy password or token
 #   NEXUS_URL       — Base URL of the Nexus instance (no trailing slash)
+#
+# NOTE: The @main ref below tracks the latest reusable workflow. For
+# reproducible builds and supply-chain safety, pin to a specific release
+# tag or commit SHA once your team has stabilised on a version, e.g.:
+#   uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@v1
 
 name: Publish to DPC Maven Repo
 

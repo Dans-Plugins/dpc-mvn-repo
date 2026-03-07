@@ -2,6 +2,11 @@
 # Drop this file into your plugin repo at .github/workflows/ci.yml
 # It triggers a build-and-test run on every push and pull request,
 # without publishing any artifacts.
+#
+# NOTE: The @main ref below tracks the latest reusable workflow. For
+# reproducible builds and supply-chain safety, pin to a specific release
+# tag or commit SHA once your team has stabilised on a version, e.g.:
+#   uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-build.yml@v1
 
 name: CI
 
