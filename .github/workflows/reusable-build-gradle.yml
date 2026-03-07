@@ -1,0 +1,37 @@
+# .github/workflows/reusable-build-gradle.yml
+# Reusable workflow — build & test only, no artifact deployment.
+# Called by individual DPC plugin/library repos that use Gradle for CI on push/PR.
+
+name: Reusable — Build & Test (Gradle)
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      gradle-args:
+        description: 'Extra Gradle arguments passed to ./gradlew build'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Build & Test
+        run: ./gradlew build ${{ inputs.gradle-args }}

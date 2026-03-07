@@ -1,0 +1,70 @@
+# .github/workflows/reusable-publish-gradle.yml
+# Reusable workflow — called by individual DPC plugin/library repos that use
+# Gradle to build and publish JAR artifacts to the self-hosted DPC Nexus
+# Maven repository.
+#
+# Releases  → pushed when the triggering ref is a tag matching v*
+# Snapshots → pushed for all other refs (branches, manual dispatch, etc.)
+#
+# Each Gradle project must declare a maven-publish repository that reads
+# NEXUS_URL, NEXUS_REPO_TYPE, NEXUS_USERNAME, and NEXUS_PASSWORD from the
+# environment. See docs/examples/publish-gradle.yml and PUBLISHING.md for
+# the required build.gradle / build.gradle.kts snippet.
+
+name: Reusable — Build & Publish to DPC Maven Repo (Gradle)
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      gradle-args:
+        description: 'Extra Gradle arguments passed to ./gradlew publish'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      NEXUS_USERNAME:
+        description: 'Nexus deploy username'
+        required: true
+      NEXUS_PASSWORD:
+        description: 'Nexus deploy password or token'
+        required: true
+      NEXUS_URL:
+        description: 'Base URL of the Nexus instance (e.g. https://repo.dansplugins.com)'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Determine target repository
+        id: repo
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "type=releases" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=snapshots" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build & Publish
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+          NEXUS_REPO_TYPE: ${{ steps.repo.outputs.type }}
+        run: ./gradlew publish ${{ inputs.gradle-args }}
