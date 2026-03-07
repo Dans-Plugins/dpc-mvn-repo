@@ -1,26 +1,35 @@
 <!-- 
-  Sample POM configuration for deploying to DPC Maven Repository
-  Add this to your project's pom.xml
+  Sample POM configuration for deploying to DPC Maven Repository.
+  Add the sections below to your project's pom.xml as needed.
+
+  The <distributionManagement> URLs are overridden at CI build time via
+  the -DaltDeploymentRepository flag in the reusable-publish workflow, so
+  local builds without NEXUS_URL set will fall back to these defaults.
 -->
 
+<!-- ================================================================== -->
+<!-- Distribution management (required for mvn deploy)                  -->
+<!-- ================================================================== -->
 <distributionManagement>
   <repository>
-    <id>dpc-maven-repo-releases</id>
+    <id>dpc-maven-repo</id>
     <name>DPC Maven Repository - Releases</name>
-    <url>http://localhost:8081/repository/maven-releases/</url>
+    <url>${env.NEXUS_URL}/repository/maven-releases/</url>
   </repository>
   <snapshotRepository>
-    <id>dpc-maven-repo-snapshots</id>
+    <id>dpc-maven-repo</id>
     <name>DPC Maven Repository - Snapshots</name>
-    <url>http://localhost:8081/repository/maven-snapshots/</url>
+    <url>${env.NEXUS_URL}/repository/maven-snapshots/</url>
   </snapshotRepository>
 </distributionManagement>
 
-<!-- Optional: Add repository for downloading from DPC Maven Repository -->
+<!-- ================================================================== -->
+<!-- Optional: consume artifacts from the DPC Maven Repository          -->
+<!-- ================================================================== -->
 <repositories>
   <repository>
     <id>dpc-maven-repo-releases</id>
-    <url>http://localhost:8081/repository/maven-releases/</url>
+    <url>${env.NEXUS_URL}/repository/maven-releases/</url>
     <releases>
       <enabled>true</enabled>
     </releases>
@@ -30,7 +39,7 @@
   </repository>
   <repository>
     <id>dpc-maven-repo-snapshots</id>
-    <url>http://localhost:8081/repository/maven-snapshots/</url>
+    <url>${env.NEXUS_URL}/repository/maven-snapshots/</url>
     <releases>
       <enabled>false</enabled>
     </releases>

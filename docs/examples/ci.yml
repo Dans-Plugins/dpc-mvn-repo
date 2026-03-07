@@ -1,0 +1,18 @@
+# docs/examples/ci.yml
+# Drop this file into your plugin repo at .github/workflows/ci.yml
+# It triggers a build-and-test run on every push and pull request,
+# without publishing any artifacts.
+
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-build.yml@main
+    with:
+      java-version: '17'

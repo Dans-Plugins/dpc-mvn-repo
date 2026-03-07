@@ -1,0 +1,79 @@
+# .github/workflows/reusable-publish.yml
+# Reusable workflow — called by individual DPC plugin repos to build and
+# publish JAR artifacts to the self-hosted DPC Nexus Maven repository.
+#
+# Releases  → pushed when the triggering ref is a tag matching v*
+# Snapshots → pushed for all other refs (branches, manual dispatch, etc.)
+
+name: Reusable — Build & Publish to DPC Maven Repo
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      maven-args:
+        description: 'Extra Maven arguments passed to mvn deploy'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      NEXUS_USERNAME:
+        description: 'Nexus deploy username'
+        required: true
+      NEXUS_PASSWORD:
+        description: 'Nexus deploy password or token'
+        required: true
+      NEXUS_URL:
+        description: 'Base URL of the Nexus instance (e.g. https://repo.dansplugins.com)'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+
+      - name: Configure Maven settings
+        # The server <id> below must match the <id> in the calling plugin's
+        # <distributionManagement> block (see pom.xml.template).
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>dpc-maven-repo</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Determine target repository
+        id: repo
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "type=releases" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=snapshots" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build & Deploy
+        run: |
+          mvn --batch-mode clean deploy \
+            -DaltDeploymentRepository=dpc-maven-repo::default::${{ secrets.NEXUS_URL }}/repository/maven-${{ steps.repo.outputs.type }}/ \
+            ${{ inputs.maven-args }}

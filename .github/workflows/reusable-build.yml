@@ -1,0 +1,37 @@
+# .github/workflows/reusable-build.yml
+# Reusable workflow — build & test only, no artifact deployment.
+# Called by individual DPC plugin repos for CI on push/PR.
+
+name: Reusable — Build & Test
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      maven-args:
+        description: 'Extra Maven arguments passed to mvn verify'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build & Test
+        run: mvn --batch-mode clean verify ${{ inputs.maven-args }}
