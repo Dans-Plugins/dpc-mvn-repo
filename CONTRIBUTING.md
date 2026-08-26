@@ -46,6 +46,7 @@ dpc-mvn-repo/
 ├── settings.xml.template        # Maven settings template
 ├── pom.xml.template             # POM configuration template
 ├── .env.example                 # Documented environment variables
+├── .gitignore                   # Git ignore rules
 ├── CONTRIBUTING.md              # This file
 ├── PUBLISHING.md                # Publishing artifacts from a plugin repo
 ├── QUICKSTART.md                # Three-step onboarding
