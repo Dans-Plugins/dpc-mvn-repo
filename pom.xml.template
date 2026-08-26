@@ -26,22 +26,23 @@
 <!-- ================================================================== -->
 <!-- Optional: consume artifacts from the DPC Maven Repository          -->
 <!-- ================================================================== -->
+<!--
+  The consumption URL is hardcoded rather than read from ${env.NEXUS_URL}: a
+  contributor running `mvn package` without that variable exported would
+  otherwise get a repository URL containing the literal text ${env.NEXUS_URL}
+  and an unexplained resolution failure. Replace the host below with your own
+  Nexus URL. The id must match the <server> id in settings.xml.template so
+  Maven sends credentials when anonymous access is disabled.
+
+  maven-public is the Nexus group combining maven-releases, maven-snapshots,
+  and maven-central, so one declaration resolves both releases and snapshots.
+-->
 <repositories>
   <repository>
-    <id>dpc-maven-repo-releases</id>
-    <url>${env.NEXUS_URL}/repository/maven-releases/</url>
+    <id>dpc-maven-repo</id>
+    <url>https://repo.dansplugins.com/repository/maven-public/</url>
     <releases>
       <enabled>true</enabled>
-    </releases>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-  </repository>
-  <repository>
-    <id>dpc-maven-repo-snapshots</id>
-    <url>${env.NEXUS_URL}/repository/maven-snapshots/</url>
-    <releases>
-      <enabled>false</enabled>
     </releases>
     <snapshots>
       <enabled>true</enabled>

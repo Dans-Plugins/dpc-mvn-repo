@@ -35,6 +35,12 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
+    # A reusable workflow inherits the caller's token permissions. Publishing
+    # needs nothing beyond reading the checked-out source, so cap it explicitly
+    # rather than inheriting whatever each adopting repository defaults to.
+    permissions:
+      contents: read
+
     # Expose credentials as env vars so Maven reads them from the environment
     # rather than having them written verbatim into settings.xml (avoids XML
     # injection when passwords contain special characters like & or <).
@@ -59,17 +65,28 @@ jobs:
           server-username: NEXUS_USERNAME
           server-password: NEXUS_PASSWORD
 
+      # Values are bound to env vars rather than expanded into the script body:
+      # a ${{ }} expansion is substituted before the shell parses the line, so a
+      # ref or input containing shell metacharacters would otherwise be executed
+      # rather than compared. This job holds the Nexus credentials, which makes
+      # it the worst place in the repository for that pattern.
       - name: Determine target repository
         id: repo
+        env:
+          REF: ${{ github.ref }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "$REF" == refs/tags/v* ]]; then
             echo "type=releases" >> "$GITHUB_OUTPUT"
           else
             echo "type=snapshots" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build & Deploy
+        env:
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+          REPO_TYPE: ${{ steps.repo.outputs.type }}
+          MAVEN_ARGS: ${{ inputs.maven-args }}
         run: |
           mvn --batch-mode clean deploy \
-            -DaltDeploymentRepository=dpc-maven-repo::default::${{ secrets.NEXUS_URL }}/repository/maven-${{ steps.repo.outputs.type }}/ \
-            ${{ inputs.maven-args }}
+            -DaltDeploymentRepository="dpc-maven-repo::default::${NEXUS_URL}/repository/maven-${REPO_TYPE}/" \
+            ${MAVEN_ARGS}

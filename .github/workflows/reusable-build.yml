@@ -22,6 +22,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # A reusable workflow inherits the caller's token permissions. Building and
+    # testing needs nothing beyond reading the checked-out source, so cap it
+    # explicitly rather than inheriting each adopting repository's default.
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,5 +39,10 @@ jobs:
           distribution: temurin
           cache: maven
 
+      # maven-args is bound to an env var rather than expanded into the script
+      # body, so an input containing shell metacharacters is passed as arguments
+      # rather than executed.
       - name: Build & Test
-        run: mvn --batch-mode clean verify ${{ inputs.maven-args }}
+        env:
+          MAVEN_ARGS: ${{ inputs.maven-args }}
+        run: mvn --batch-mode clean verify ${MAVEN_ARGS}

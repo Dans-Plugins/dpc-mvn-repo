@@ -9,6 +9,12 @@
     The single server id 'dpc-maven-repo' covers both releases and snapshots
     because the reusable-publish workflow routes to the correct repository via
     -DaltDeploymentRepository at deploy time.
+
+    The same id is used by the mirror, the repository, and the pluginRepository
+    below so that Maven finds these credentials for every request it makes to
+    this Nexus instance. An id here without a matching <server> id would make
+    Maven resolve anonymously and fail with 401 once anonymous access is
+    disabled (see docs/PRODUCTION.md).
   -->
   
   <servers>
@@ -33,21 +39,16 @@
     <profile>
       <id>dpc-maven-repo</id>
       <repositories>
+        <!--
+          maven-public is the Nexus group that combines maven-releases,
+          maven-snapshots, and maven-central, so a single declaration resolves
+          both release and snapshot artifacts under one id.
+        -->
         <repository>
-          <id>dpc-maven-repo-releases</id>
-          <url>http://localhost:8081/repository/maven-releases/</url>
+          <id>dpc-maven-repo</id>
+          <url>http://localhost:8081/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </repository>
-        <repository>
-          <id>dpc-maven-repo-snapshots</id>
-          <url>http://localhost:8081/repository/maven-snapshots/</url>
-          <releases>
-            <enabled>false</enabled>
           </releases>
           <snapshots>
             <enabled>true</enabled>
@@ -56,8 +57,8 @@
       </repositories>
       <pluginRepositories>
         <pluginRepository>
-          <id>dpc-maven-repo-releases</id>
-          <url>http://localhost:8081/repository/maven-releases/</url>
+          <id>dpc-maven-repo</id>
+          <url>http://localhost:8081/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>

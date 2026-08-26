@@ -41,6 +41,12 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
+    # A reusable workflow inherits the caller's token permissions. Publishing
+    # needs nothing beyond reading the checked-out source, so cap it explicitly
+    # rather than inheriting whatever each adopting repository defaults to.
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,14 +58,26 @@ jobs:
           distribution: temurin
           cache: gradle
 
+      # Values are bound to env vars rather than expanded into the script body:
+      # a ${{ }} expansion is substituted before the shell parses the line, so a
+      # ref or input containing shell metacharacters would otherwise be executed
+      # rather than compared. This job holds the Nexus credentials, which makes
+      # it the worst place in the repository for that pattern.
       - name: Determine target repository
         id: repo
+        env:
+          REF: ${{ github.ref }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "$REF" == refs/tags/v* ]]; then
             echo "type=releases" >> "$GITHUB_OUTPUT"
           else
             echo "type=snapshots" >> "$GITHUB_OUTPUT"
           fi
+
+      # Repositories that committed gradlew without the executable mode bit
+      # otherwise fail the next step with "Permission denied".
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
 
       - name: Build & Publish
         env:
@@ -67,4 +85,5 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_URL: ${{ secrets.NEXUS_URL }}
           NEXUS_REPO_TYPE: ${{ steps.repo.outputs.type }}
-        run: ./gradlew publish ${{ inputs.gradle-args }}
+          GRADLE_ARGS: ${{ inputs.gradle-args }}
+        run: ./gradlew publish ${GRADLE_ARGS}

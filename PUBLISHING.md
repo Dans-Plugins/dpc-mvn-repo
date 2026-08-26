@@ -306,18 +306,16 @@ For **Gradle** projects: ensure the `version` property in `build.gradle` / `buil
 To depend on an artifact published to the DPC Maven Repository, add the repository declarations and the dependency to your plugin's `pom.xml`:
 
 ```xml
-<!-- Repository declarations — replace https://repo.dansplugins.com with your Nexus URL -->
+<!-- Repository declaration — replace https://repo.dansplugins.com with your Nexus URL.
+     maven-public is the Nexus group combining maven-releases, maven-snapshots, and
+     maven-central, so one entry resolves both releases and snapshots. The id must match
+     the <server> id in your settings.xml, or Maven resolves anonymously and fails with
+     401 once anonymous access is disabled. -->
 <repositories>
   <repository>
-    <id>dpc-maven-repo-releases</id>
-    <url>https://repo.dansplugins.com/repository/maven-releases/</url>
+    <id>dpc-maven-repo</id>
+    <url>https://repo.dansplugins.com/repository/maven-public/</url>
     <releases><enabled>true</enabled></releases>
-    <snapshots><enabled>false</enabled></snapshots>
-  </repository>
-  <repository>
-    <id>dpc-maven-repo-snapshots</id>
-    <url>https://repo.dansplugins.com/repository/maven-snapshots/</url>
-    <releases><enabled>false</enabled></releases>
     <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
@@ -343,6 +341,7 @@ Replace the `groupId`, `artifactId`, and `version` values with those declared in
 
 - Verify `NEXUS_USERNAME` and `NEXUS_PASSWORD` secrets are set correctly and the user exists in Nexus.
 - Confirm the user has write permission for the target repository (`maven-releases` or `maven-snapshots`).
+- **When resolving dependencies rather than deploying:** confirm the `<repository>` id in your `pom.xml` matches a `<server>` id in your `~/.m2/settings.xml`. Maven matches credentials to repositories by id alone, so a mismatch makes it resolve anonymously — which succeeds until anonymous access is disabled, then fails with 401 and no other diagnostic. Both ids should be `dpc-maven-repo`.
 - **Maven:** Run `mvn deploy -X` locally with the credentials to see the full error.
 - **Gradle:** Run `./gradlew publish --info` locally with the env vars exported to see the full error.
 

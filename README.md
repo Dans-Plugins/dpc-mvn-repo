@@ -93,6 +93,11 @@ Then deploy with:
 mvn clean deploy
 ```
 
+To publish automatically from a DPC plugin repository on every version tag
+instead of deploying by hand, see [PUBLISHING.md](PUBLISHING.md) — it covers the
+reusable GitHub Actions workflows this repository provides for both Maven and
+Gradle projects.
+
 ## Management Commands
 
 ### Start the Repository
@@ -130,10 +135,26 @@ docker-compose up -d
 
 ```
 dpc-mvn-repo/
+├── .github/workflows/    # Reusable CI/publish workflows for DPC plugin repos
+├── docs/
+│   ├── examples/         # Example caller workflows to copy into a plugin repo
+│   ├── PRODUCTION.md     # Production deployment guide
+│   └── TROUBLESHOOTING.md # Symptom-based troubleshooting guide
 ├── docker-compose.yml    # Docker Compose orchestration
+├── docker-compose.override.yml.example # Production override sample
 ├── Dockerfile            # Custom Nexus image configuration
-├── .gitignore           # Git ignore rules
-└── README.md            # This file
+├── Makefile              # Convenience commands
+├── setup.sh              # Setup automation
+├── backup.sh             # Backup automation
+├── restore.sh            # Restore automation
+├── settings.xml.template # Maven settings template
+├── pom.xml.template      # POM configuration template
+├── .env.example          # Documented environment variables
+├── .gitignore            # Git ignore rules
+├── CONTRIBUTING.md       # Contribution guidelines
+├── PUBLISHING.md         # Publishing artifacts from a plugin repo
+├── QUICKSTART.md         # Three-step onboarding
+└── README.md             # This file
 ```
 
 ## Default Repositories
