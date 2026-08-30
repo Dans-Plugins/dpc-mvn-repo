@@ -31,7 +31,13 @@ If you encounter any problems or have suggestions for improvements:
 
 ```
 dpc-mvn-repo/
+├── .github/workflows/           # Reusable CI/publish workflows for plugin repos
+├── docs/
+│   ├── examples/                # Example caller workflows for plugin repos
+│   ├── PRODUCTION.md            # Production deployment guide
+│   └── TROUBLESHOOTING.md       # Troubleshooting guide
 ├── docker-compose.yml           # Main orchestration file
+├── docker-compose.override.yml.example # Production override sample
 ├── Dockerfile                   # Custom Nexus image
 ├── setup.sh                     # Setup automation
 ├── backup.sh                    # Backup automation
@@ -39,6 +45,11 @@ dpc-mvn-repo/
 ├── Makefile                     # Convenience commands
 ├── settings.xml.template        # Maven settings template
 ├── pom.xml.template             # POM configuration template
+├── .env.example                 # Documented environment variables
+├── .gitignore                   # Git ignore rules
+├── CONTRIBUTING.md              # This file
+├── PUBLISHING.md                # Publishing artifacts from a plugin repo
+├── QUICKSTART.md                # Three-step onboarding
 └── README.md                    # Main documentation
 ```
 
@@ -77,6 +88,29 @@ Before submitting a PR:
 5. Clean up test environment:
    ```bash
    make clean
+   ```
+
+6. If you changed any workflow under `.github/workflows/` or any example under
+   `docs/examples/`, confirm every one of them still parses:
+   ```bash
+   python3 -c "import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" \
+     .github/workflows/*.yml docs/examples/*.yml
+   ```
+
+7. If you changed `settings.xml.template`, confirm it is still well-formed XML:
+   ```bash
+   python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('settings.xml.template')"
+   ```
+   `pom.xml.template` is a fragment with several top-level elements and no root,
+   so it will not parse as-is — review that one by reading.
+
+8. If you changed a Maven server or repository id, confirm every id still agrees
+   across the four files that declare one. Every `<repository>` and
+   `<pluginRepository>` id must have a matching `<server>` id, or Maven resolves
+   anonymously and fails with 401 once anonymous access is disabled:
+   ```bash
+   grep -rn 'dpc-maven-repo' README.md QUICKSTART.md PUBLISHING.md \
+     settings.xml.template pom.xml.template
    ```
 
 ### Documentation

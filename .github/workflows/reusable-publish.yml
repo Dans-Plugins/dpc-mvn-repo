@@ -1,0 +1,92 @@
+# .github/workflows/reusable-publish.yml
+# Reusable workflow — called by individual DPC plugin repos to build and
+# publish JAR artifacts to the self-hosted DPC Nexus Maven repository.
+#
+# Releases  → pushed when the triggering ref is a tag matching v*
+# Snapshots → pushed for all other refs (branches, manual dispatch, etc.)
+
+name: Reusable — Build & Publish to DPC Maven Repo
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      maven-args:
+        description: 'Extra Maven arguments passed to mvn deploy'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      NEXUS_USERNAME:
+        description: 'Nexus deploy username'
+        required: true
+      NEXUS_PASSWORD:
+        description: 'Nexus deploy password or token'
+        required: true
+      NEXUS_URL:
+        description: 'Base URL of the Nexus instance (e.g. https://repo.dansplugins.com)'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    # A reusable workflow inherits the caller's token permissions. Publishing
+    # needs nothing beyond reading the checked-out source, so cap it explicitly
+    # rather than inheriting whatever each adopting repository defaults to.
+    permissions:
+      contents: read
+
+    # Expose credentials as env vars so Maven reads them from the environment
+    # rather than having them written verbatim into settings.xml (avoids XML
+    # injection when passwords contain special characters like & or <).
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # actions/setup-java generates ~/.m2/settings.xml with ${env.NEXUS_USERNAME}
+      # and ${env.NEXUS_PASSWORD} placeholders — Maven resolves them at runtime
+      # from the job-level env vars above, keeping credentials out of the XML file.
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+          server-id: dpc-maven-repo
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
+
+      # Values are bound to env vars rather than expanded into the script body:
+      # a ${{ }} expansion is substituted before the shell parses the line, so a
+      # ref or input containing shell metacharacters would otherwise be executed
+      # rather than compared. This job holds the Nexus credentials, which makes
+      # it the worst place in the repository for that pattern.
+      - name: Determine target repository
+        id: repo
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" == refs/tags/v* ]]; then
+            echo "type=releases" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=snapshots" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build & Deploy
+        env:
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+          REPO_TYPE: ${{ steps.repo.outputs.type }}
+          MAVEN_ARGS: ${{ inputs.maven-args }}
+        run: |
+          mvn --batch-mode clean deploy \
+            -DaltDeploymentRepository="dpc-maven-repo::default::${NEXUS_URL}/repository/maven-${REPO_TYPE}/" \
+            ${MAVEN_ARGS}

@@ -1,0 +1,33 @@
+# docs/examples/publish.yml
+# Drop this file into your plugin repo at .github/workflows/publish.yml
+# It publishes the built JAR to the DPC Nexus Maven repository whenever
+# a version tag (v*) is pushed or the workflow is triggered manually.
+#
+# Prerequisites — the following secrets must exist in the plugin repo
+# (or at the Dans-Plugins organisation level):
+#   NEXUS_USERNAME  — Nexus deploy username
+#   NEXUS_PASSWORD  — Nexus deploy password or token
+#   NEXUS_URL       — Base URL of the Nexus instance (no trailing slash)
+#
+# NOTE: The @main ref below tracks the latest reusable workflow. For
+# reproducible builds and supply-chain safety, pin to a specific release
+# tag or commit SHA once your team has stabilised on a version, e.g.:
+#   uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@v1
+
+name: Publish to DPC Maven Repo
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@main
+    with:
+      java-version: '17'
+    secrets:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_URL: ${{ secrets.NEXUS_URL }}

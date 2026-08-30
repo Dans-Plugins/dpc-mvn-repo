@@ -1,0 +1,89 @@
+# .github/workflows/reusable-publish-gradle.yml
+# Reusable workflow — called by individual DPC plugin/library repos that use
+# Gradle to build and publish JAR artifacts to the self-hosted DPC Nexus
+# Maven repository.
+#
+# Releases  → pushed when the triggering ref is a tag matching v*
+# Snapshots → pushed for all other refs (branches, manual dispatch, etc.)
+#
+# Each Gradle project must declare a maven-publish repository that reads
+# NEXUS_URL, NEXUS_REPO_TYPE, NEXUS_USERNAME, and NEXUS_PASSWORD from the
+# environment. See docs/examples/publish-gradle.yml and PUBLISHING.md for
+# the required build.gradle / build.gradle.kts snippet.
+
+name: Reusable — Build & Publish to DPC Maven Repo (Gradle)
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      gradle-args:
+        description: 'Extra Gradle arguments passed to ./gradlew publish'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      NEXUS_USERNAME:
+        description: 'Nexus deploy username'
+        required: true
+      NEXUS_PASSWORD:
+        description: 'Nexus deploy password or token'
+        required: true
+      NEXUS_URL:
+        description: 'Base URL of the Nexus instance (e.g. https://repo.dansplugins.com)'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    # A reusable workflow inherits the caller's token permissions. Publishing
+    # needs nothing beyond reading the checked-out source, so cap it explicitly
+    # rather than inheriting whatever each adopting repository defaults to.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: gradle
+
+      # Values are bound to env vars rather than expanded into the script body:
+      # a ${{ }} expansion is substituted before the shell parses the line, so a
+      # ref or input containing shell metacharacters would otherwise be executed
+      # rather than compared. This job holds the Nexus credentials, which makes
+      # it the worst place in the repository for that pattern.
+      - name: Determine target repository
+        id: repo
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" == refs/tags/v* ]]; then
+            echo "type=releases" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=snapshots" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Repositories that committed gradlew without the executable mode bit
+      # otherwise fail the next step with "Permission denied".
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Build & Publish
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+          NEXUS_REPO_TYPE: ${{ steps.repo.outputs.type }}
+          GRADLE_ARGS: ${{ inputs.gradle-args }}
+        run: ./gradlew publish ${GRADLE_ARGS}

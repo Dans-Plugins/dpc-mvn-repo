@@ -1,0 +1,53 @@
+# .github/workflows/reusable-build-gradle.yml
+# Reusable workflow — build & test only, no artifact deployment.
+# Called by individual DPC plugin/library repos that use Gradle for CI on push/PR.
+
+name: Reusable — Build & Test (Gradle)
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to build with'
+        required: false
+        type: string
+        default: '17'
+      gradle-args:
+        description: 'Extra Gradle arguments passed to ./gradlew build'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # A reusable workflow inherits the caller's token permissions. Building and
+    # testing needs nothing beyond reading the checked-out source, so cap it
+    # explicitly rather than inheriting each adopting repository's default.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: gradle
+
+      # Repositories that committed gradlew without the executable mode bit
+      # otherwise fail the next step with "Permission denied".
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      # gradle-args is bound to an env var rather than expanded into the script
+      # body, so an input containing shell metacharacters is passed as arguments
+      # rather than executed.
+      - name: Build & Test
+        env:
+          GRADLE_ARGS: ${{ inputs.gradle-args }}
+        run: ./gradlew build ${GRADLE_ARGS}

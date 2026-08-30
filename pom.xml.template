@@ -1,38 +1,48 @@
 <!-- 
-  Sample POM configuration for deploying to DPC Maven Repository
-  Add this to your project's pom.xml
+  Sample POM configuration for deploying to DPC Maven Repository.
+  Add the sections below to your project's pom.xml as needed.
+
+  NEXUS_URL must be set (e.g. export NEXUS_URL=https://repo.dansplugins.com).
+  In CI the reusable-publish workflow overrides the URL at deploy time via
+  -DaltDeploymentRepository, so the value below is used only for local deploys.
 -->
 
+<!-- ================================================================== -->
+<!-- Distribution management (required for mvn deploy)                  -->
+<!-- ================================================================== -->
 <distributionManagement>
   <repository>
-    <id>dpc-maven-repo-releases</id>
+    <id>dpc-maven-repo</id>
     <name>DPC Maven Repository - Releases</name>
-    <url>http://localhost:8081/repository/maven-releases/</url>
+    <url>${env.NEXUS_URL}/repository/maven-releases/</url>
   </repository>
   <snapshotRepository>
-    <id>dpc-maven-repo-snapshots</id>
+    <id>dpc-maven-repo</id>
     <name>DPC Maven Repository - Snapshots</name>
-    <url>http://localhost:8081/repository/maven-snapshots/</url>
+    <url>${env.NEXUS_URL}/repository/maven-snapshots/</url>
   </snapshotRepository>
 </distributionManagement>
 
-<!-- Optional: Add repository for downloading from DPC Maven Repository -->
+<!-- ================================================================== -->
+<!-- Optional: consume artifacts from the DPC Maven Repository          -->
+<!-- ================================================================== -->
+<!--
+  The consumption URL is hardcoded rather than read from ${env.NEXUS_URL}: a
+  contributor running `mvn package` without that variable exported would
+  otherwise get a repository URL containing the literal text ${env.NEXUS_URL}
+  and an unexplained resolution failure. Replace the host below with your own
+  Nexus URL. The id must match the <server> id in settings.xml.template so
+  Maven sends credentials when anonymous access is disabled.
+
+  maven-public is the Nexus group combining maven-releases, maven-snapshots,
+  and maven-central, so one declaration resolves both releases and snapshots.
+-->
 <repositories>
   <repository>
-    <id>dpc-maven-repo-releases</id>
-    <url>http://localhost:8081/repository/maven-releases/</url>
+    <id>dpc-maven-repo</id>
+    <url>https://repo.dansplugins.com/repository/maven-public/</url>
     <releases>
       <enabled>true</enabled>
-    </releases>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-  </repository>
-  <repository>
-    <id>dpc-maven-repo-snapshots</id>
-    <url>http://localhost:8081/repository/maven-snapshots/</url>
-    <releases>
-      <enabled>false</enabled>
     </releases>
     <snapshots>
       <enabled>true</enabled>

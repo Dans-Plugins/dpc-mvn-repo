@@ -95,6 +95,7 @@ make backup     # Create backup
 ## Need More Help?
 
 - 📖 [Full Documentation](README.md)
+- 📦 [Publishing from a Plugin Repo](PUBLISHING.md)
 - 🚀 [Production Deployment](docs/PRODUCTION.md)
 - 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md)
 - 💬 [Contributing](CONTRIBUTING.md)
