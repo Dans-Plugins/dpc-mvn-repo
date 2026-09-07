@@ -113,6 +113,15 @@ Before submitting a PR:
      settings.xml.template pom.xml.template
    ```
 
+9. If you changed the `<mirrorOf>` scope in either file that declares a mirror,
+   confirm both still agree. A mirror scoped to `*` intercepts every repository
+   request, including ones aimed at repositories the `maven-public` group does not
+   contain, so the two files prescribing different scopes for the same
+   `~/.m2/settings.xml` is a defect even when both happen to work:
+   ```bash
+   grep -n '<mirrorOf>' README.md settings.xml.template
+   ```
+
 ### Documentation
 
 - Update README.md if you add new features or change existing behavior
