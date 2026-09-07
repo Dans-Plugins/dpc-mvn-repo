@@ -63,12 +63,27 @@ After logging in and changing the default password, configure your Maven `settin
   <mirrors>
     <mirror>
       <id>dpc-maven-repo</id>
-      <mirrorOf>*</mirrorOf>
+      <mirrorOf>central</mirrorOf>
       <url>http://localhost:8081/repository/maven-public/</url>
     </mirror>
   </mirrors>
 </settings>
 ```
+
+The mirror is scoped to `central` rather than `*` deliberately. A mirror whose scope is `*`
+matches every repository id, so it intercepts requests aimed at repositories declared
+elsewhere in your build — including ones that are not members of the `maven-public` group and
+therefore cannot be served by it. Scoping to `central` routes only Maven Central through this
+Nexus instance and leaves every other repository declaration working as written.
+
+Because the mirror no longer catches everything, artifacts published to this instance are
+resolved through an explicit `<repository>` declaration instead — see
+[Deploy Artifacts](#5-deploy-artifacts) below for the deploy side and
+[`pom.xml.template`](pom.xml.template) for the consuming side.
+
+[`settings.xml.template`](settings.xml.template) contains the same configuration with an
+activated profile that adds that repository declaration for you, so copying that file is an
+alternative to editing `settings.xml` by hand.
 
 ### 5. Deploy Artifacts
 
