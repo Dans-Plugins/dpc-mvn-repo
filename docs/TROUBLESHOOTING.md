@@ -69,10 +69,16 @@ Common issues and solutions for the DPC Maven Repository.
    docker stats dpc-maven-repo
    ```
 
-2. Increase memory in `docker-compose.yml`:
-   ```yaml
-   environment:
-     - INSTALL4J_ADD_VM_PARAMS=-Xms2g -Xmx2g -XX:MaxDirectMemorySize=2g
+2. Increase memory in `.env` (copy `.env.example` to `.env` if it does not exist yet):
+   ```bash
+   NEXUS_MIN_HEAP=2g
+   NEXUS_MAX_HEAP=2g
+   NEXUS_MAX_DIRECT_MEMORY=2g
+   ```
+
+3. Recreate the container so the new values take effect:
+   ```bash
+   docker compose up -d
    ```
 
 ## Maven Integration Issues
