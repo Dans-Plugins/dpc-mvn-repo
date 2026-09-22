@@ -1,14 +1,17 @@
+# Values in ${VAR:-default} form are read from a .env file in this directory
+# (see .env.example). Every default is the value that was previously hardcoded,
+# so the service is unchanged when no .env exists.
 services:
   nexus:
     image: sonatype/nexus3:latest
     container_name: dpc-maven-repo
     restart: unless-stopped
     ports:
-      - "8081:8081"
+      - "${NEXUS_PORT:-8081}:8081"
     volumes:
       - nexus-data:/nexus-data
     environment:
-      - INSTALL4J_ADD_VM_PARAMS=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=273m
+      - INSTALL4J_ADD_VM_PARAMS=-Xms${NEXUS_MIN_HEAP:-512m} -Xmx${NEXUS_MAX_HEAP:-512m} -XX:MaxDirectMemorySize=${NEXUS_MAX_DIRECT_MEMORY:-273m}
 
 volumes:
   nexus-data:
