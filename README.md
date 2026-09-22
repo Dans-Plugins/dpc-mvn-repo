@@ -183,21 +183,36 @@ Nexus comes with several pre-configured repositories:
 
 ## Configuration
 
+Settings are read from a `.env` file in the repository directory. Create one from the
+documented example and edit the values you want to change:
+
+```bash
+cp .env.example .env
+```
+
+Every value in `.env.example` is also the default that applies when no `.env` exists, so
+an unmodified copy changes nothing.
+
 ### Resource Limits
 
 The default configuration allocates:
 - Heap Memory: 512MB
 - Direct Memory: 273MB
 
-To adjust these limits, modify the `INSTALL4J_ADD_VM_PARAMS` environment variable in `docker-compose.yml`.
+To adjust these limits, set the memory variables in `.env`:
+
+```bash
+NEXUS_MIN_HEAP=1g
+NEXUS_MAX_HEAP=1g
+NEXUS_MAX_DIRECT_MEMORY=546m
+```
 
 ### Port Configuration
 
-By default, Nexus runs on port 8081. To change this, modify the ports mapping in `docker-compose.yml`:
+By default, Nexus runs on port 8081. To change this, set `NEXUS_PORT` in `.env`:
 
-```yaml
-ports:
-  - "9000:8081"  # Change 9000 to your desired port
+```bash
+NEXUS_PORT=9000  # Change 9000 to your desired port
 ```
 
 ## Data Persistence
@@ -257,11 +272,18 @@ Common issues:
 
 ### Slow Performance
 
-Increase memory allocation in `docker-compose.yml`:
+Increase memory allocation in `.env` (see [Configuration](#configuration)):
 
-```yaml
-environment:
-  - INSTALL4J_ADD_VM_PARAMS=-Xms1g -Xmx1g -XX:MaxDirectMemorySize=546m
+```bash
+NEXUS_MIN_HEAP=1g
+NEXUS_MAX_HEAP=1g
+NEXUS_MAX_DIRECT_MEMORY=546m
+```
+
+Then recreate the container so the new values take effect:
+
+```bash
+docker-compose up -d
 ```
 
 ## Support

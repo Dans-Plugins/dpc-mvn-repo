@@ -122,6 +122,19 @@ Before submitting a PR:
    grep -n '<mirrorOf>' README.md settings.xml.template
    ```
 
+10. If you changed `.env.example` or any `${VAR:-default}` in `docker-compose.yml`,
+    confirm the two still agree. Every key in `.env.example` must be interpolated by
+    `docker-compose.yml`, and every default must equal the example value, so that a
+    documented variable always has an effect and an unmodified `.env` changes nothing:
+    ```bash
+    python3 -c 'import re; e=dict(re.findall(r"^([A-Z_]+)=(.*)$",open(".env.example").read(),re.M)); y="".join(l for l in open("docker-compose.yml") if not l.lstrip().startswith("#")); c=dict(re.findall(r"\$\{([A-Z_]+):-([^}]*)\}",y)); assert e==c,(e,c); print("OK: .env.example and docker-compose.yml agree:",e)'
+    ```
+    Then confirm the merged configuration carries the values you expect, both with
+    no `.env` present and with one that sets a non-default value:
+    ```bash
+    docker compose config | grep -E 'published|INSTALL4J'
+    ```
+
 ### Documentation
 
 - Update README.md if you add new features or change existing behavior

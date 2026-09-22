@@ -1,28 +1,27 @@
 # Docker Compose override example for production deployment
 # Copy this file to docker-compose.override.yml and customize as needed
+#
+# Heap size, direct memory, and the published port are set in .env (see
+# .env.example), not here. An INSTALL4J_ADD_VM_PARAMS entry in this file
+# would silently take precedence over whatever .env says, so leave memory
+# settings to .env and keep this file for options .env does not cover.
 
 services:
   nexus:
-    # Increase memory for production workloads
-    environment:
-      - INSTALL4J_ADD_VM_PARAMS=-Xms2g -Xmx2g -XX:MaxDirectMemorySize=2g
-    
     # Add custom labels for monitoring
     labels:
       - "com.example.environment=production"
       - "com.example.service=maven-repository"
-    
+
     # Configure logging
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    
-    # Uncomment to use custom port
-    # ports:
-    #   - "9000:8081"
-    
+
+    # To publish on a different port, set NEXUS_PORT in .env instead.
+
     # Uncomment to bind to specific network interface
     # ports:
     #   - "127.0.0.1:8081:8081"
