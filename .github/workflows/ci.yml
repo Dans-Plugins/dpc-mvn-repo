@@ -1,0 +1,65 @@
+# .github/workflows/ci.yml
+# CI for this repository itself (the reusable-*.yml files are for plugin repos
+# to call and never run here on their own).
+#
+# Runs on every push to main and every pull request. The push run matters
+# beyond this repo: the gateway only auto-bumps services/dpc-mvn-repo when the
+# upstream main commit carries at least one completed, successful check run.
+#
+# Nothing here publishes: no secrets are read, no reusable publish workflow is
+# called, and the built image is never pushed.
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Workflow contracts (triggers, inputs, secrets, permissions), the
+      # example callers against them, and the XML templates.
+      - name: Validate workflows and templates
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install --break-system-packages 'pyyaml==6.0.2'
+          python3 .github/scripts/validate_repo.py
+
+      - name: Shellcheck scripts
+        run: shellcheck ./*.sh
+
+      - name: Validate compose files
+        run: |
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.yml -f docker-compose.override.yml.example config -q
+
+  docker-build:
+    name: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The gateway builds this Dockerfile for repo.dansplugins.com.
+      - name: Build image
+        run: docker build -t dpc-mvn-repo:ci .
+
+      # Both this image's HEALTHCHECK and the gateway's compose healthcheck
+      # shell out to curl; fail here if the base image ever stops shipping it.
+      - name: Check healthcheck dependency
+        run: docker run --rm --entrypoint sh dpc-mvn-repo:ci -c 'command -v curl'
