@@ -157,6 +157,16 @@ def check_xml(path, *, fragment):
         fail(path, f"XML is not well-formed: {exc}")
 
 
+def check_pinned_images():
+    """A floating Nexus tag would upgrade the server (and migrate its data
+    volume) on any rebuild; the base image must name an exact release."""
+    for name in ("Dockerfile", "docker-compose.yml"):
+        path = ROOT / name
+        for ref in re.findall(r"(?:FROM|image:)\s+(sonatype/nexus3\S*)", path.read_text(encoding="utf-8")):
+            if "@sha256:" not in ref or ref.split("@")[0].endswith((":latest", "nexus3")):
+                fail(path, f"Nexus image {ref!r} is not pinned to a release tag and digest")
+
+
 def main():
     contracts = {}
     reusable = sorted(WORKFLOWS.glob("reusable-*.yml"))
@@ -180,6 +190,7 @@ def main():
 
     check_xml(ROOT / "settings.xml.template", fragment=False)
     check_xml(ROOT / "pom.xml.template", fragment=True)
+    check_pinned_images()
 
     if errors:
         print("Validation failed:")

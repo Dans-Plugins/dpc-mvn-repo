@@ -1,6 +1,6 @@
 services:
   nexus:
-    image: sonatype/nexus3:latest
+    image: sonatype/nexus3:3.85.0@sha256:a2f0af994a4022a127414e9733adcf175ffb655d266fb4b0836717c5aa33a58d
     container_name: dpc-maven-repo
     restart: unless-stopped
     ports:
