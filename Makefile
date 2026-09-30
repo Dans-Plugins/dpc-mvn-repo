@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs status backup restore clean update
+.PHONY: help start stop restart logs status backup restore clean update setup password shell
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
