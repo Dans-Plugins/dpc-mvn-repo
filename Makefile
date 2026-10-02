@@ -50,8 +50,8 @@ clean: ## Remove all containers and volumes (WARNING: destroys all data!)
 		echo "Cancelled."; \
 	fi
 
-update: ## Update to the latest version
-	@echo "📥 Pulling latest image..."
+update: ## Pull the pinned Nexus image and recreate the container
+	@echo "📥 Pulling pinned image..."
 	@docker-compose pull
 	@echo "🔄 Recreating container..."
 	@docker-compose up -d

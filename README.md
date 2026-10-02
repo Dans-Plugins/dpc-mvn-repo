@@ -139,7 +139,12 @@ docker-compose logs -f
 docker-compose restart
 ```
 
-### Update to Latest Version
+### Update Nexus
+
+The Nexus image is pinned by version and digest in `docker-compose.yml`, so
+pulling never moves to a newer release on its own. To upgrade, change the pinned
+`image:` reference (and the matching `FROM` line in `Dockerfile`) in a PR, then
+pull and recreate the container:
 
 ```bash
 docker-compose pull
