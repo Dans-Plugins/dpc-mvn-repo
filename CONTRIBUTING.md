@@ -31,7 +31,12 @@ If you encounter any problems or have suggestions for improvements:
 
 ```
 dpc-mvn-repo/
-├── .github/workflows/           # Reusable CI/publish workflows for plugin repos
+├── .github/
+│   ├── scripts/
+│   │   └── validate_repo.py     # Static checks run by this repo's CI
+│   └── workflows/
+│       ├── ci.yml               # CI for this repository itself
+│       └── reusable-*.yml       # Reusable build/publish workflows for plugin repos
 ├── docs/
 │   ├── examples/                # Example caller workflows for plugin repos
 │   ├── PRODUCTION.md            # Production deployment guide
@@ -67,6 +72,7 @@ Before submitting a PR:
 1. Validate Docker Compose configuration:
    ```bash
    docker compose config --quiet
+   docker compose -f docker-compose.yml -f docker-compose.override.yml.example config --quiet
    ```
 
 2. Test the setup process:
@@ -133,6 +139,15 @@ Before submitting a PR:
     no `.env` present and with one that sets a non-default value:
     ```bash
     docker compose config | grep -E 'published|INSTALL4J'
+    ```
+
+11. Run the static checks that CI (`.github/workflows/ci.yml`) runs on every pull
+    request. The validator checks the reusable workflow contracts, the example
+    callers against them, both XML templates, and that the Nexus image is pinned
+    to a release tag and digest; it needs only PyYAML:
+    ```bash
+    python3 .github/scripts/validate_repo.py
+    shellcheck ./*.sh
     ```
 
 ### Documentation

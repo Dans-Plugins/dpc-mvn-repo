@@ -155,7 +155,12 @@ docker-compose up -d
 
 ```
 dpc-mvn-repo/
-├── .github/workflows/    # Reusable CI/publish workflows for DPC plugin repos
+├── .github/
+│   ├── scripts/
+│   │   └── validate_repo.py # Static checks run by this repo's CI
+│   └── workflows/
+│       ├── ci.yml        # CI for this repository itself
+│       └── reusable-*.yml # Reusable build/publish workflows for DPC plugin repos
 ├── docs/
 │   ├── examples/         # Example caller workflows to copy into a plugin repo
 │   ├── PRODUCTION.md     # Production deployment guide
