@@ -22,9 +22,11 @@ services:
 
     # To publish on a different port, set NEXUS_PORT in .env instead.
 
-    # Uncomment to bind to specific network interface
-    # ports:
-    #   - "127.0.0.1:8081:8081"
+    # Uncomment to bind to a specific network interface. The !override tag
+    # replaces the base file's port list; without it Compose merges the two
+    # lists and keeps the 0.0.0.0 binding too. Requires Docker Compose 2.24+.
+    # ports: !override
+    #   - "127.0.0.1:${NEXUS_PORT:-8081}:8081"
 
 # Uncomment to use external network
 # networks:
