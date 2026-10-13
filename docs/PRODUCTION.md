@@ -91,7 +91,8 @@ proxy from step 5. After starting the repository (step 7), confirm the binding:
 ss -ltn | grep 8081
 ```
 
-The listening address must be `127.0.0.1:8081`, not `0.0.0.0:8081` or `*:8081`.
+The only listening address must be `127.0.0.1:8081`; a `0.0.0.0:8081`,
+`[::]:8081`, or `*:8081` line means Nexus is still exposed.
 
 ### 5. Deploy with Reverse Proxy (Recommended)
 
