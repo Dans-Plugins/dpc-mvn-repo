@@ -6,7 +6,7 @@ This guide covers deploying the DPC Maven Repository in a production environment
 
 - Linux server (Ubuntu 20.04+ or similar)
 - Docker Engine 20.10+
-- Docker Compose v2+
+- Docker Compose 2.24+ (needed for the `!override` tag used in step 4)
 - At least 4GB RAM
 - At least 50GB available disk space
 - Domain name (optional but recommended)
@@ -70,6 +70,29 @@ sudo ufw enable
 
 **Note**: Do not expose port 8081 directly. Use a reverse proxy instead.
 
+ufw does **not** keep port 8081 closed on its own. Docker writes its own
+iptables rules for every published port, and those rules are evaluated before
+ufw's (see [Docker and ufw](https://docs.docker.com/engine/network/packet-filtering-firewalls/)).
+The base `docker-compose.yml` publishes Nexus on all interfaces, so it stays
+reachable from the internet even with the rules above.
+
+To keep Nexus off the public interface, uncomment the `ports: !override` block
+in the `docker-compose.override.yml` created in step 3:
+
+```yaml
+    ports: !override
+      - "127.0.0.1:${NEXUS_PORT:-8081}:8081"
+```
+
+Nexus is then reachable only from the host itself, i.e. through the reverse
+proxy from step 5. After starting the repository (step 7), confirm the binding:
+
+```bash
+ss -ltn | grep 8081
+```
+
+The listening address must be `127.0.0.1:8081`, not `0.0.0.0:8081` or `*:8081`.
+
 ### 5. Deploy with Reverse Proxy (Recommended)
 
 #### Option A: Nginx Reverse Proxy
@@ -108,7 +131,7 @@ server {
     client_max_body_size 500M;
     
     location / {
-        proxy_pass http://localhost:8081;
+        proxy_pass http://127.0.0.1:8081;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
