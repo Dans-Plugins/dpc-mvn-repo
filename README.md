@@ -229,6 +229,20 @@ NEXUS_PORT=9000  # Change 9000 to your desired port
 
 Maven artifacts and configuration are stored in a Docker volume named `nexus-data`. This ensures data persists across container restarts and upgrades.
 
+Compose prefixes the volume with the project name, which defaults to the checkout
+directory name, so a clone in `dpc-mvn-repo/` uses the volume `dpc-mvn-repo_nexus-data`.
+That is the name `backup.sh`, `restore.sh`, and the commands below assume. If your
+checkout directory has a different name, find the real volume with
+`docker volume ls | grep nexus-data` and pass it to the scripts:
+
+```bash
+NEXUS_VOLUME=<name> ./backup.sh
+NEXUS_VOLUME=<name> ./restore.sh backups/nexus-backup-<timestamp>.tar.gz
+```
+
+`backup.sh` exits with an error if the volume does not exist, rather than archiving
+an empty volume that Docker would otherwise create on demand.
+
 To backup the data:
 
 ```bash
