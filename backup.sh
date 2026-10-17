@@ -15,7 +15,7 @@ echo "📦 Starting backup of DPC Maven Repository..."
 # docker run -v <name>:/data creates a missing volume silently, which would
 # produce an archive of an empty directory. Refuse to back up in that case.
 if ! docker volume inspect "$VOLUME_NAME" >/dev/null 2>&1; then
-    echo "❌ Error: Docker volume '$VOLUME_NAME' does not exist."
+    echo "❌ Error: Docker volume '$VOLUME_NAME' does not exist (or Docker is not reachable)."
     echo "   Compose derives the volume name from the checkout directory name."
     echo "   Find the right one with: docker volume ls | grep nexus-data"
     echo "   Then run: NEXUS_VOLUME=<name> ./backup.sh"
