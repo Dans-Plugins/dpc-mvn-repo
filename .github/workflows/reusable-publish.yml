@@ -81,6 +81,31 @@ jobs:
             echo "type=snapshots" >> "$GITHUB_OUTPUT"
           fi
 
+      # Nexus rejects a -SNAPSHOT version in maven-releases and a release
+      # version in maven-snapshots, but only once the full build has run, and
+      # its error does not name the cause. Compare the two before building.
+      - name: Verify version matches target repository
+        env:
+          REPO_TYPE: ${{ steps.repo.outputs.type }}
+          MAVEN_ARGS: ${{ inputs.maven-args }}
+        run: |
+          VERSION="$(mvn --batch-mode --quiet \
+            org.apache.maven.plugins:maven-help-plugin:3.5.1:evaluate \
+            -Dexpression=project.version -DforceStdout ${MAVEN_ARGS})"
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not resolve the project version from pom.xml."
+            exit 1
+          fi
+          if [[ "$REPO_TYPE" == releases && "$VERSION" == *-SNAPSHOT ]]; then
+            echo "::error::Version $VERSION is a SNAPSHOT, but a v* tag routes it to maven-releases, which rejects SNAPSHOTs. Set <version> in pom.xml to the release version (e.g. ${VERSION%-SNAPSHOT}) and re-tag."
+            exit 1
+          fi
+          if [[ "$REPO_TYPE" == snapshots && "$VERSION" != *-SNAPSHOT ]]; then
+            echo "::error::Version $VERSION is not a SNAPSHOT, but this ref is not a v* tag, so it routes to maven-snapshots, which rejects release versions. Publish releases by pushing a v* tag, or set <version> in pom.xml to $VERSION-SNAPSHOT."
+            exit 1
+          fi
+          echo "Version $VERSION matches maven-$REPO_TYPE."
+
       - name: Build & Deploy
         env:
           NEXUS_URL: ${{ secrets.NEXUS_URL }}
