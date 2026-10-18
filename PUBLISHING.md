@@ -299,6 +299,15 @@ Follow [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH` (e.g. `v
 For **Maven** projects: ensure your `pom.xml` `<version>` matches the tag (e.g. `1.0.0` for tag `v1.0.0`). SNAPSHOT versions (e.g. `1.1.0-SNAPSHOT`) will be published to `maven-snapshots` on every branch push.  
 For **Gradle** projects: ensure the `version` property in `build.gradle` / `build.gradle.kts` matches the tag.
 
+Before building, both publish workflows check that the project version agrees with the target repository, and fail within seconds if it does not:
+
+| Situation | Result |
+|---|---|
+| `v*` tag, version ends in `-SNAPSHOT` | Fails — `maven-releases` rejects SNAPSHOT versions |
+| Any other ref, version does not end in `-SNAPSHOT` | Fails — `maven-snapshots` rejects release versions |
+
+The Maven check reads `project.version` from the root `pom.xml`; the Gradle check reads the root project's `version`. Arguments passed through `maven-args` / `gradle-args` are applied to the check as well, so a version set on the command line (e.g. `-Drevision=1.2.3`) is the one checked.
+
 ---
 
 ## 5. Consuming published artifacts
@@ -348,7 +357,13 @@ Replace the `groupId`, `artifactId`, and `version` values with those declared in
 ### 403 Forbidden / Deployment policy violation
 
 - In the Nexus UI, check that **Deployment Policy** for the `maven-releases` repository is set to **Allow Redeploy** (or **Disable Redeploy** if you intentionally block overwriting).
-- SNAPSHOT versions cannot be pushed to `maven-releases`.
+- SNAPSHOT versions cannot be pushed to `maven-releases`, and release versions cannot be pushed to `maven-snapshots`. The publish workflows catch both before building (see [Section 4](#4-versioning-convention)); only the root project's version is checked, so a 403 that still names this policy usually means a submodule declares a different version than the root, or the deploy was run locally.
+
+### Version does not match the target repository
+
+- The `Verify version matches target repository` step failed before the build ran. Its error names the version it found and the repository the ref routed to.
+- **SNAPSHOT under a `v*` tag:** set the release version (e.g. `1.0.0`), commit, then delete and re-push the tag so it points at that commit.
+- **Release version on a branch or `workflow_dispatch`:** push a `v*` tag to publish a release, or append `-SNAPSHOT` to the version to publish a snapshot.
 
 ### Wrong repository URL
 
