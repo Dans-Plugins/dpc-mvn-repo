@@ -73,8 +73,15 @@ Add to your `pom.xml`:
     <id>dpc-maven-repo</id>
     <url>http://localhost:8081/repository/maven-releases/</url>
   </repository>
+  <snapshotRepository>
+    <id>dpc-maven-repo</id>
+    <url>http://localhost:8081/repository/maven-snapshots/</url>
+  </snapshotRepository>
 </distributionManagement>
 ```
+
+Without `<snapshotRepository>`, Maven deploys a `-SNAPSHOT` version to
+`maven-releases`, which rejects it.
 
 3. Deploy:
 
