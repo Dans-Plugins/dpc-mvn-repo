@@ -296,8 +296,10 @@ GitHub Actions will detect the `v1.0.0` tag, run the `publish` workflow, and dep
 | Any other ref (branch push, `workflow_dispatch`) | `maven-snapshots` |
 
 Follow [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`, `v2.3.1`).  
-For **Maven** projects: ensure your `pom.xml` `<version>` matches the tag (e.g. `1.0.0` for tag `v1.0.0`). SNAPSHOT versions (e.g. `1.1.0-SNAPSHOT`) will be published to `maven-snapshots` on every branch push.  
+For **Maven** projects: ensure your `pom.xml` `<version>` matches the tag (e.g. `1.0.0` for tag `v1.0.0`).  
 For **Gradle** projects: ensure the `version` property in `build.gradle` / `build.gradle.kts` matches the tag.
+
+The example `publish.yml` callers trigger only on a `v*` tag push and on `workflow_dispatch`, so a branch push never publishes anything. To publish a SNAPSHOT version (e.g. `1.1.0-SNAPSHOT`) to `maven-snapshots`, run the workflow manually on that branch (**Actions → Publish to DPC Maven Repo → Run workflow**). To publish on every branch push instead, add a `branches:` filter under `on.push` in your copy of `publish.yml`.
 
 Before building, both publish workflows check that the project version agrees with the target repository, and fail within seconds if it does not:
 
