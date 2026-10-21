@@ -269,7 +269,11 @@ docker run --rm -v dpc-mvn-repo_nexus-data:/data -v $(pwd):/backup ubuntu tar xz
 For production use:
 
 1. Use a reverse proxy (nginx/Apache) with SSL/TLS
-2. Configure firewall rules to restrict access
+2. Bind Nexus to `127.0.0.1` so it is reachable only through the reverse proxy.
+   A host firewall such as ufw does not do this on its own: Docker's rules for
+   published ports are evaluated before ufw's, so port 8081 stays open to the
+   internet. See [Firewall Configuration](docs/PRODUCTION.md#4-firewall-configuration)
+   in the production guide for the override that binds it to localhost.
 3. Set up regular backups
 4. Enable authentication for all repositories
 5. Use strong passwords and consider token-based authentication
