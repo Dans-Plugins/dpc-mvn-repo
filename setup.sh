@@ -40,6 +40,12 @@ if [ $COUNTER -ge $MAX_WAIT ]; then
     exit 1
 fi
 
+# Ask Compose which host port 8081 is published on, so NEXUS_PORT from .env
+# (or an override file) is reflected in the printed URL; fall back to 8081
+HOST_PORT=$(docker-compose port nexus 8081 2>/dev/null | tail -n 1)
+HOST_PORT="${HOST_PORT##*:}"
+HOST_PORT="${HOST_PORT:-8081}"
+
 # Get the initial admin password
 echo ""
 echo "🔑 Retrieving initial admin password..."
@@ -49,7 +55,7 @@ if docker exec dpc-maven-repo test -f /nexus-data/admin.password; then
     echo "✅ Setup complete!"
     echo ""
     echo "📝 Access Information:"
-    echo "   URL: http://localhost:8081"
+    echo "   URL: http://localhost:${HOST_PORT}"
     echo "   Username: admin"
     echo "   Password: $ADMIN_PASSWORD"
     echo ""
@@ -58,7 +64,7 @@ else
     echo "✅ Setup complete!"
     echo ""
     echo "📝 Access Information:"
-    echo "   URL: http://localhost:8081"
+    echo "   URL: http://localhost:${HOST_PORT}"
     echo ""
     echo "ℹ️  The admin password file is not available yet. It may take a few more moments."
     echo "   Retrieve it later with: docker exec dpc-maven-repo cat /nexus-data/admin.password"
