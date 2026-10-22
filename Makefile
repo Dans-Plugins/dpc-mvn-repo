@@ -9,7 +9,8 @@ help: ## Show this help message
 start: ## Start the Maven repository
 	@echo "🚀 Starting DPC Maven Repository..."
 	@docker-compose up -d
-	@echo "✅ Repository started. Access at http://localhost:8081"
+	@port=$$(docker-compose port nexus 8081 2>/dev/null | tail -n 1); port=$${port##*:}; \
+	echo "✅ Repository started. Access at http://localhost:$${port:-8081}"
 
 stop: ## Stop the Maven repository
 	@echo "🛑 Stopping DPC Maven Repository..."
