@@ -39,7 +39,7 @@ fi
 # Stop the container if running
 if docker ps | grep -q dpc-maven-repo; then
     echo "🛑 Stopping Maven Repository..."
-    docker-compose down
+    docker compose down
 fi
 
 # Restore from backup
@@ -51,6 +51,6 @@ docker run --rm \
 
 echo "✅ Restore complete!"
 echo "🚀 Starting Maven Repository..."
-docker-compose up -d
+docker compose up -d
 
 echo "✅ Done! The repository has been restored and is starting up."
