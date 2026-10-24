@@ -167,6 +167,17 @@ def check_pinned_images():
                 fail(path, f"Nexus image {ref!r} is not pinned to a release tag and digest")
 
 
+def check_compose_cli():
+    """The documented prerequisite is Compose v2, which installs only the
+    `docker compose` plugin; a `docker-compose` call fails with 'command not
+    found' on such a host. File names like docker-compose.yml are allowed."""
+    paths = [ROOT / "Makefile", *ROOT.glob("*.sh"), *ROOT.glob("*.md"), *ROOT.glob("docs/*.md")]
+    for path in sorted(paths):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if re.search(r"\bdocker-compose(?![.\w-])", line):
+                fail(path, f"line {number} calls 'docker-compose'; use 'docker compose' (Compose v2)")
+
+
 def main():
     contracts = {}
     reusable = sorted(WORKFLOWS.glob("reusable-*.yml"))
@@ -191,6 +202,7 @@ def main():
     check_xml(ROOT / "settings.xml.template", fragment=False)
     check_xml(ROOT / "pom.xml.template", fragment=True)
     check_pinned_images()
+    check_compose_cli()
 
     if errors:
         print("Validation failed:")

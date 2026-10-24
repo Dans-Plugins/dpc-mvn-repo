@@ -25,7 +25,7 @@ cd dpc-mvn-repo
 ### 2. Start the Maven Repository
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This will:
@@ -118,25 +118,25 @@ Gradle projects.
 ### Start the Repository
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Stop the Repository
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### View Logs
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Restart the Repository
 
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### Update Nexus
@@ -147,8 +147,8 @@ pulling never moves to a newer release on its own. To upgrade, change the pinned
 pull and recreate the container:
 
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## Repository Structure
@@ -284,7 +284,7 @@ For production use:
 
 Check logs:
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 Common issues:
@@ -294,7 +294,7 @@ Common issues:
 
 ### Can't Access Web Interface
 
-1. Verify container is running: `docker-compose ps`
+1. Verify container is running: `docker compose ps`
 2. Check if port is accessible: `curl http://localhost:8081`
 3. Review firewall settings
 
@@ -311,7 +311,7 @@ NEXUS_MAX_DIRECT_MEMORY=546m
 Then recreate the container so the new values take effect:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Support

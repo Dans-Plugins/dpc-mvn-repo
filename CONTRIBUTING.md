@@ -143,8 +143,10 @@ Before submitting a PR:
 
 11. Run the static checks that CI (`.github/workflows/ci.yml`) runs on every pull
     request. The validator checks the reusable workflow contracts, the example
-    callers against them, both XML templates, and that the Nexus image is pinned
-    to a release tag and digest; it needs only PyYAML:
+    callers against them, both XML templates, that the Nexus image is pinned
+    to a release tag and digest, and that no script, `Makefile` target, or doc
+    calls the standalone Compose v1 binary instead of `docker compose`; it needs
+    only PyYAML:
     ```bash
     python3 .github/scripts/validate_repo.py
     shellcheck ./*.sh

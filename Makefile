@@ -8,25 +8,25 @@ help: ## Show this help message
 
 start: ## Start the Maven repository
 	@echo "🚀 Starting DPC Maven Repository..."
-	@docker-compose up -d
-	@port=$$(docker-compose port nexus 8081 2>/dev/null | tail -n 1); port=$${port##*:}; \
+	@docker compose up -d
+	@port=$$(docker compose port nexus 8081 2>/dev/null | tail -n 1); port=$${port##*:}; \
 	echo "✅ Repository started. Access at http://localhost:$${port:-8081}"
 
 stop: ## Stop the Maven repository
 	@echo "🛑 Stopping DPC Maven Repository..."
-	@docker-compose down
+	@docker compose down
 	@echo "✅ Repository stopped."
 
 restart: ## Restart the Maven repository
 	@echo "🔄 Restarting DPC Maven Repository..."
-	@docker-compose restart
+	@docker compose restart
 	@echo "✅ Repository restarted."
 
 logs: ## View logs (use Ctrl+C to exit)
-	@docker-compose logs -f
+	@docker compose logs -f
 
 status: ## Show status of the Maven repository
-	@docker-compose ps
+	@docker compose ps
 	@echo ""
 	@echo "Docker volumes:"
 	@docker volume ls | grep nexus-data || echo "No nexus-data volume found"
@@ -45,7 +45,7 @@ clean: ## Remove all containers and volumes (WARNING: destroys all data!)
 	@echo "⚠️  WARNING: This will remove all containers and data!"
 	@read -p "Are you sure? (yes/no): " confirm; \
 	if [ "$$confirm" = "yes" ]; then \
-		docker-compose down -v; \
+		docker compose down -v; \
 		echo "✅ Cleanup complete."; \
 	else \
 		echo "Cancelled."; \
@@ -53,9 +53,9 @@ clean: ## Remove all containers and volumes (WARNING: destroys all data!)
 
 update: ## Pull the pinned Nexus image and recreate the container
 	@echo "📥 Pulling pinned image..."
-	@docker-compose pull
+	@docker compose pull
 	@echo "🔄 Recreating container..."
-	@docker-compose up -d
+	@docker compose up -d
 	@echo "✅ Update complete."
 
 setup: ## Run initial setup
