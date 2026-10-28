@@ -42,12 +42,25 @@ if docker ps | grep -q dpc-maven-repo; then
     docker compose down
 fi
 
-# Restore from backup
+# Restore from backup. Empty the volume first so files written after the
+# backup was taken do not survive next to the restored ones. The archive is
+# checked before anything is deleted: it must read cleanly and contain the
+# data/ tree that backup.sh writes, or the volume is left untouched.
 echo "📦 Restoring from backup: $BACKUP_FILE"
-docker run --rm \
+# shellcheck disable=SC2016 # $1 is expanded by the container's sh, not here
+if ! docker run --rm \
     -v "${VOLUME_NAME}:/data" \
     -v "$(dirname "$(realpath "$BACKUP_FILE")"):/backup" \
-    ubuntu tar xzf "/backup/$(basename "$BACKUP_FILE")" -C /
+    ubuntu sh -c '
+        tar tzf "$1" >/dev/null || { echo "❌ Error: Backup archive is unreadable: $1"; exit 1; }
+        tar tzf "$1" | grep -q "^data/" || { echo "❌ Error: Backup archive has no data/ directory: $1"; exit 1; }
+        find /data -mindepth 1 -delete
+        tar xzf "$1" -C /
+    ' sh "/backup/$(basename "$BACKUP_FILE")"; then
+    echo "❌ Error: Restore failed. The Maven Repository has been left stopped."
+    echo "   Fix the problem above and rerun ./restore.sh, or start it with: make start"
+    exit 1
+fi
 
 echo "✅ Restore complete!"
 echo "🚀 Starting Maven Repository..."
