@@ -249,10 +249,13 @@ To backup the data:
 docker run --rm -v dpc-mvn-repo_nexus-data:/data -v $(pwd):/backup ubuntu tar czf /backup/nexus-backup.tar.gz /data
 ```
 
-To restore from backup:
+To restore from backup, stop Nexus first, then empty the volume and extract the
+archive. Emptying it first makes the restore a replacement: anything uploaded after
+the backup was taken is removed instead of being left next to the restored data.
+`restore.sh` does the same, and also checks the archive before deleting anything:
 
 ```bash
-docker run --rm -v dpc-mvn-repo_nexus-data:/data -v $(pwd):/backup ubuntu tar xzf /backup/nexus-backup.tar.gz -C /
+docker run --rm -v dpc-mvn-repo_nexus-data:/data -v $(pwd):/backup ubuntu sh -c 'find /data -mindepth 1 -delete && tar xzf /backup/nexus-backup.tar.gz -C /'
 ```
 
 ## Security

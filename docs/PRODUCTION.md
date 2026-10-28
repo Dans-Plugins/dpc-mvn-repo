@@ -244,6 +244,8 @@ docker stats dpc-maven-repo
    ```bash
    make restore BACKUP=/path/to/backup.tar.gz
    ```
+   The restore replaces the whole volume: it is emptied before the archive is
+   extracted, so artifacts uploaded after the backup was taken are removed.
 3. Verify data integrity
 
 ## Support
