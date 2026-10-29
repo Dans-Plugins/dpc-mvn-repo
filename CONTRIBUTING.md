@@ -86,10 +86,15 @@ Before submitting a PR:
    make status
    ```
 
-4. Test backup and restore (if applicable):
+4. Test backup and restore (if applicable). The restore asks for confirmation,
+   then replaces the volume's contents with the backup:
    ```bash
    make backup
+   make restore BACKUP=backups/nexus-backup-<timestamp>.tar.gz
    ```
+   If your checkout directory is not named `dpc-mvn-repo`, prefix both commands
+   with `NEXUS_VOLUME=<directory-name>_nexus-data` (see
+   [Data Persistence](README.md#data-persistence)).
 
 5. Clean up test environment:
    ```bash

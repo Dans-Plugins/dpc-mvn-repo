@@ -292,7 +292,8 @@ docker compose logs
 
 Common issues:
 - Insufficient memory
-- Port 8081 already in use
+- Port 8081 already in use (set `NEXUS_PORT` in `.env` to publish on another port —
+  see [Port Configuration](#port-configuration))
 - Docker daemon not running
 
 ### Can't Access Web Interface

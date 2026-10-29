@@ -8,10 +8,13 @@ Common issues and solutions for the DPC Maven Repository.
 
 **Solutions**:
 
-1. Check if port 8081 is already in use:
+1. Check if the host port is already in use. It is 8081 unless `NEXUS_PORT` is
+   set in `.env`; if it is, check that port instead:
    ```bash
    sudo lsof -i :8081
    ```
+   If another process holds the port, stop it or set `NEXUS_PORT` in `.env` to a
+   free port, then run `docker compose up -d` again.
    
 2. Check Docker logs:
    ```bash
