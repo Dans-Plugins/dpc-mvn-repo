@@ -239,14 +239,16 @@ docker stats dpc-maven-repo
 
 ### Recovery Process
 
-1. Stop the current instance
-2. Restore from backup:
+1. Restore from backup:
    ```bash
    make restore BACKUP=/path/to/backup.tar.gz
    ```
-   The restore replaces the whole volume: it is emptied before the archive is
-   extracted, so artifacts uploaded after the backup was taken are removed.
-3. Verify data integrity
+   The restore asks for confirmation, then stops the running container, so
+   there is no need to stop it first. It replaces the whole volume: the
+   volume is emptied before the archive is extracted, so artifacts uploaded
+   after the backup was taken are removed. After a successful restore it starts
+   the repository again. If the restore fails, it leaves the repository stopped.
+2. Verify data integrity
 
 ## Support
 
