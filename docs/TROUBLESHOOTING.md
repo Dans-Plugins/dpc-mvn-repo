@@ -92,7 +92,13 @@ Common issues and solutions for the DPC Maven Repository.
 
 1. Verify credentials in `~/.m2/settings.xml`
 
-2. Check server ID matches `pom.xml`
+2. Check that the `<server>` id in `~/.m2/settings.xml` matches the ids in your
+   `pom.xml`'s `<distributionManagement>`. Maven picks credentials by id alone, so
+   a mismatch sends the deploy without credentials and it fails with 401. The
+   `<repository>` and `<snapshotRepository>` entries both use `dpc-maven-repo`
+   (see [`pom.xml.template`](../pom.xml.template)). If the deploy is a
+   `-SNAPSHOT` version and there is no `<snapshotRepository>`, Maven sends it to
+   `maven-releases`, which rejects it.
 
 3. Verify repository URL:
    ```bash
@@ -110,12 +116,18 @@ Common issues and solutions for the DPC Maven Repository.
 
 1. Check repository is online in Nexus UI
 
-2. Test repository access:
+2. If resolution fails with 401, check that the `<repository>` id in your
+   `pom.xml` has a matching `<server>` id in `~/.m2/settings.xml` (both
+   `dpc-maven-repo`). Without one, Maven resolves anonymously. That works until
+   anonymous access is disabled (see [PRODUCTION.md](PRODUCTION.md)), and then
+   every request fails with 401.
+
+3. Test repository access:
    ```bash
    curl http://localhost:8081/repository/maven-public/
    ```
 
-3. Clear local Maven cache:
+4. Clear local Maven cache:
    ```bash
    rm -rf ~/.m2/repository/*
    ```
