@@ -206,20 +206,32 @@ make update
 Set up automated backups:
 
 ```bash
-# Create backup script
-cat > /usr/local/bin/backup-nexus.sh << 'EOF'
+# Create backup script (/usr/local/bin is owned by root, hence sudo tee)
+sudo tee /usr/local/bin/backup-nexus.sh > /dev/null << 'EOF'
 #!/bin/bash
+# Stop at the first failure, so old backups are pruned only after a new one
+# has been written.
+set -e
 cd /path/to/dpc-mvn-repo
 ./backup.sh /backup/nexus
 # Keep only last 7 days
 find /backup/nexus -name "*.tar.gz" -mtime +7 -delete
 EOF
 
-chmod +x /usr/local/bin/backup-nexus.sh
+sudo chmod +x /usr/local/bin/backup-nexus.sh
+
+# Create the backup directory, owned by the user whose crontab runs the script
+sudo mkdir -p /backup/nexus
+sudo chown "$USER" /backup/nexus
 
 # Add to crontab (daily at 2 AM)
 (crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/backup-nexus.sh") | crontab -
 ```
+
+Without `set -e`, a failed backup (for example `backup.sh` refusing a missing
+volume) would still run the `find` step. Each day without a new archive would
+then delete one more old one, until none were left. With `set -e` the script
+stops at the failure and exits non-zero, and the old backups are kept.
 
 ## Monitoring
 
