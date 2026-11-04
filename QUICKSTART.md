@@ -34,7 +34,8 @@ The setup script will:
    - Username: `admin`
    - Password: (shown by setup script)
 
-3. Follow the setup wizard to change your password
+3. Follow the setup wizard to change your password and accept the Community
+   Edition license agreement
 
 ## Using the Repository
 
@@ -109,7 +110,7 @@ make backup     # Create backup
 
 ## What's Included?
 
-- ✅ Sonatype Nexus Repository Manager OSS
+- ✅ Sonatype Nexus Repository Community Edition ([usage limits](README.md#usage-limits))
 - ✅ Docker & Docker Compose setup
 - ✅ Automated backup & restore scripts
 - ✅ Production-ready configuration examples

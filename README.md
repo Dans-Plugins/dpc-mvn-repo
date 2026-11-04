@@ -4,7 +4,7 @@ Infrastructure-as-Code Maven Repository for Dan's Plugins Community using Docker
 
 ## Overview
 
-This repository provides a self-hosted Maven repository using Sonatype Nexus Repository Manager OSS. It's designed to be easy to deploy and manage using Docker containers.
+This repository provides a self-hosted Maven repository using Sonatype Nexus Repository Community Edition. It's designed to be easy to deploy and manage using Docker containers.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ docker compose up -d
 ```
 
 This will:
-- Pull the Nexus Repository Manager OSS Docker image
+- Pull the Nexus Repository Community Edition Docker image
 - Create a persistent volume for Maven artifacts
 - Start the repository on port 8081
 
@@ -190,6 +190,16 @@ Nexus comes with several pre-configured repositories:
 - **maven-releases**: Hosted repository for release artifacts
 - **maven-snapshots**: Hosted repository for snapshot artifacts
 - **maven-public**: Repository group combining all Maven repositories
+
+## Usage Limits
+
+The pinned Nexus release is Community Edition, which replaced Nexus Repository OSS in
+3.77.0. Sonatype limits it to 40,000 total components and 100,000 requests per day. While
+either limit is exceeded, no new components can be added until usage is back under both,
+so publishing to this repository stops. Administrators can see current usage in the Usage
+Center, on the landing page after logging in. See
+[Community Edition Limitations](https://help.sonatype.com/en/ce-onboarding.html) for
+details.
 
 ## Configuration
 

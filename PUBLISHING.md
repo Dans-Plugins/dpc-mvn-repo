@@ -54,8 +54,9 @@ on:
 
 jobs:
   build:
-    # Pin to a specific release tag or commit SHA for reproducible builds,
-    # e.g. reusable-build.yml@v1. @main always uses the latest workflow.
+    # Pin to a full-length commit SHA of this repository for reproducible
+    # builds, e.g. reusable-build.yml@<full-commit-sha> (it has no
+    # release tags yet). @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-build.yml@main
     with:
       java-version: '17'
@@ -75,8 +76,9 @@ on:
 
 jobs:
   publish:
-    # Pin to a specific release tag or commit SHA for reproducible builds,
-    # e.g. reusable-publish.yml@v1. @main always uses the latest workflow.
+    # Pin to a full-length commit SHA of this repository for reproducible
+    # builds, e.g. reusable-publish.yml@<full-commit-sha> (it has no
+    # release tags yet). @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@main
     with:
       java-version: '17'
@@ -156,8 +158,9 @@ on:
 
 jobs:
   build:
-    # Pin to a specific release tag or commit SHA for reproducible builds,
-    # e.g. reusable-build-gradle.yml@v1. @main always uses the latest workflow.
+    # Pin to a full-length commit SHA of this repository for reproducible
+    # builds, e.g. reusable-build-gradle.yml@<full-commit-sha> (it has no
+    # release tags yet). @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-build-gradle.yml@main
     with:
       java-version: '17'
@@ -177,8 +180,9 @@ on:
 
 jobs:
   publish:
-    # Pin to a specific release tag or commit SHA for reproducible builds,
-    # e.g. reusable-publish-gradle.yml@v1. @main always uses the latest workflow.
+    # Pin to a full-length commit SHA of this repository for reproducible
+    # builds, e.g. reusable-publish-gradle.yml@<full-commit-sha> (it has no
+    # release tags yet). @main always uses the latest workflow.
     uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish-gradle.yml@main
     with:
       java-version: '17'

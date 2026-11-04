@@ -110,6 +110,11 @@ Common issues and solutions for the DPC Maven Repository.
    mvn deploy -X
    ```
 
+5. If deploys that used to work have stopped, log in as an administrator and
+   check the Usage Center on the landing page. While the instance is over a
+   Community Edition limit, no new components can be added (see
+   [Usage Limits](../README.md#usage-limits)).
+
 ### Can't Download Dependencies
 
 **Solutions**:
