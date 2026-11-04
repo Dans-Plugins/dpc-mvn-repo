@@ -10,9 +10,11 @@
 #   NEXUS_URL       — Base URL of the Nexus instance (no trailing slash)
 #
 # NOTE: The @main ref below tracks the latest reusable workflow. For
-# reproducible builds and supply-chain safety, pin to a specific release
-# tag or commit SHA once your team has stabilised on a version, e.g.:
-#   uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@v1
+# reproducible builds and supply-chain safety, pin to a full-length commit
+# SHA of this repository once your team has stabilised on a version, e.g.:
+#   uses: Dans-Plugins/dpc-mvn-repo/.github/workflows/reusable-publish.yml@<full-commit-sha>
+# This repository has no release tags yet, so a ref such as @v1 does not
+# resolve.
 
 name: Publish to DPC Maven Repo
 
