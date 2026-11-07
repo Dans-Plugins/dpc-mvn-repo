@@ -115,6 +115,9 @@ Common issues and solutions for the DPC Maven Repository.
    Community Edition limit, no new components can be added (see
    [Usage Limits](../README.md#usage-limits)).
 
+6. If every deploy fails with 403, even as `admin`, finish the setup wizard. See
+   [Requests Fail with 403](#requests-fail-with-403).
+
 ### Can't Download Dependencies
 
 **Solutions**:
@@ -136,6 +139,24 @@ Common issues and solutions for the DPC Maven Repository.
    ```bash
    rm -rf ~/.m2/repository/*
    ```
+
+### Requests Fail with 403
+
+Until the Community Edition license agreement is accepted, Nexus answers every
+repository download and upload with 403, even from `admin`. Maven prints only
+`Forbidden`. To check whether it has been accepted:
+
+```bash
+curl -u admin:your-password http://localhost:8081/service/rest/v1/system/eula
+```
+
+**Solutions**:
+
+1. If the response says `"accepted" : false`, log in to the web interface as
+   `admin` and finish the setup wizard.
+
+2. If it says `"accepted" : true`, the user is valid but lacks a privilege. See
+   [Create a Nexus deploy role and user](../PUBLISHING.md#create-a-nexus-deploy-role-and-user).
 
 ## Getting Help
 

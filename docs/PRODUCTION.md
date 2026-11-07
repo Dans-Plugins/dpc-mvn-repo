@@ -176,7 +176,9 @@ docker compose up -d
    ```bash
    docker exec dpc-maven-repo cat /nexus-data/admin.password
    ```
-3. Log in and change the password
+3. Log in and follow the setup wizard to change the password and accept the
+   Community Edition license agreement. Until it is accepted, Nexus answers
+   every repository download and upload with 403
 4. Configure repository settings as needed
 
 ## Security Hardening

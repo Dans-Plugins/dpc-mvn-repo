@@ -22,14 +22,24 @@ Both **Maven** and **Gradle** build systems are supported. Jump to the section t
 | Requirement | Notes |
 |---|---|
 | Running DPC Nexus instance | See [QUICKSTART.md](QUICKSTART.md) to spin one up with Docker |
-| Nexus deploy user | Must have **write** access to `maven-releases` and `maven-snapshots` repositories |
+| Nexus deploy user | Must hold a role that can deploy to the `maven-releases` and `maven-snapshots` repositories |
 | GitHub repository secrets | Three secrets — details in the next section |
 
-### Create a Nexus deploy user
+### Create a Nexus deploy role and user
 
-1. Open the Nexus web UI (default: `http://localhost:8081`).
-2. Go to **Security → Users → Create local user**.
-3. Grant the user the **nx-deploy** or a custom role with write access to both `maven-releases` and `maven-snapshots`.
+Nexus ships with only two roles, `nx-admin` and `nx-anonymous`, so a deploy role has to be created first.
+
+1. Open the Nexus web UI (default: `http://localhost:8081`) and log in as an administrator. On a new instance, finish the setup wizard first: until the Community Edition license agreement is accepted, Nexus answers every repository request with 403, even from `admin`.
+2. Go to **Settings → Security → Roles** and select **Create Role**. Choose the **Nexus role** type, give it a Role ID such as `dpc-deployer`, and add these privileges:
+
+   | Repository | Privileges |
+   |---|---|
+   | `maven-releases` | `nx-repository-view-maven2-maven-releases-add`, `nx-repository-view-maven2-maven-releases-edit`, `nx-repository-view-maven2-maven-releases-read` |
+   | `maven-snapshots` | `nx-repository-view-maven2-maven-snapshots-add`, `nx-repository-view-maven2-maven-snapshots-edit`, `nx-repository-view-maven2-maven-snapshots-read` |
+   | `maven-public` | `nx-repository-view-maven2-maven-public-read` |
+
+   `read` is not optional: Maven and Gradle both fetch `maven-metadata.xml` during a deploy, so a role without it fails with 403. `maven-public` is needed when anonymous access is disabled and the project resolves dependencies from this instance, because the build then uses the deploy user's credentials for those requests too.
+3. Go to **Settings → Security → Users**, create a local user, and grant it the new role.
 4. Note the username and password — you will add them as GitHub secrets.
 
 ---
@@ -354,16 +364,23 @@ Replace the `groupId`, `artifactId`, and `version` values with those declared in
 
 ### 401 Unauthorized
 
+Nexus returns 401 when credentials are missing or wrong. A valid user who lacks a privilege gets [403](#403-forbidden) instead.
+
 - Verify `NEXUS_USERNAME` and `NEXUS_PASSWORD` secrets are set correctly and the user exists in Nexus.
-- Confirm the user has write permission for the target repository (`maven-releases` or `maven-snapshots`).
 - **When resolving dependencies rather than deploying:** confirm the `<repository>` id in your `pom.xml` matches a `<server>` id in your `~/.m2/settings.xml`. Maven matches credentials to repositories by id alone, so a mismatch makes it resolve anonymously — which succeeds until anonymous access is disabled, then fails with 401 and no other diagnostic. Both ids should be `dpc-maven-repo`.
 - **Maven:** Run `mvn deploy -X` locally with the credentials to see the full error.
 - **Gradle:** Run `./gradlew publish --info` locally with the env vars exported to see the full error.
 
-### 403 Forbidden / Deployment policy violation
+### 403 Forbidden
 
-- In the Nexus UI, check that **Deployment Policy** for the `maven-releases` repository is set to **Allow Redeploy** (or **Disable Redeploy** if you intentionally block overwriting).
-- SNAPSHOT versions cannot be pushed to `maven-releases`, and release versions cannot be pushed to `maven-snapshots`. The publish workflows catch both before building (see [Section 4](#4-versioning-convention)); only the root project's version is checked, so a 403 that still names this policy usually means a submodule declares a different version than the root, or the deploy was run locally.
+- **Every request fails, even as `admin`:** the Community Edition license agreement has not been accepted. Maven and Gradle print only `Forbidden`. Finish the setup wizard in the web UI (see [Requests Fail with 403](docs/TROUBLESHOOTING.md#requests-fail-with-403) for how to check).
+- **Deploys fail:** confirm the deploy user's role has the `edit` and `read` privileges on the target repository (`maven-releases` or `maven-snapshots`). See [Create a Nexus deploy role and user](#create-a-nexus-deploy-role-and-user).
+- **Dependency resolution fails during a deploy:** with anonymous access disabled, the role also needs `nx-repository-view-maven2-maven-public-read`.
+
+### 400 Repository version policy
+
+- `Repository version policy: RELEASE does not allow version` means a SNAPSHOT version was sent to `maven-releases`, and `Repository version policy: SNAPSHOT does not allow version` means a release version was sent to `maven-snapshots`.
+- The publish workflows catch both before building (see [Section 4](#4-versioning-convention)), but only for the root project's version. This error from a workflow usually means a submodule declares a different version than the root. Otherwise the deploy was run locally.
 
 ### Version does not match the target repository
 
@@ -387,7 +404,8 @@ Replace the `groupId`, `artifactId`, and `version` values with those declared in
 
 ### Artifact version already exists (releases only)
 
-- Release versions are immutable by default. Bump the version in `pom.xml` / `build.gradle.kts` and create a new tag, or change the Nexus deployment policy if you need to redeploy the same version.
+- Nexus returns 400 with `cannot be updated` in the message: `maven-releases` defaults to the **Disable Redeploy** deployment policy, so a release version can be deployed only once.
+- Bump the version in `pom.xml` / `build.gradle.kts` and create a new tag, or set the policy to **Allow Redeploy** in the repository's settings if you need to redeploy the same version.
 
 ### Build passes locally but fails in CI
 

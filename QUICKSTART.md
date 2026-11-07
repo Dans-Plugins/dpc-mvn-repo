@@ -35,7 +35,8 @@ The setup script will:
    - Password: (shown by setup script)
 
 3. Follow the setup wizard to change your password and accept the Community
-   Edition license agreement
+   Edition license agreement. Until it is accepted, Nexus answers every
+   repository download and upload with 403
 
 ## Using the Repository
 
