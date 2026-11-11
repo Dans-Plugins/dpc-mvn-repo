@@ -85,7 +85,7 @@ in the `docker-compose.override.yml` created in step 3:
 ```
 
 Nexus is then reachable only from the host itself, i.e. through the reverse
-proxy from step 5. After starting the repository (step 7), confirm the binding:
+proxy from step 6. After starting the repository (step 7), confirm the binding:
 
 ```bash
 ss -ltn | grep 8081
@@ -94,15 +94,33 @@ ss -ltn | grep 8081
 The only listening address must be `127.0.0.1:8081`; a `0.0.0.0:8081`,
 `[::]:8081`, or `*:8081` line means Nexus is still exposed.
 
-### 5. Deploy with Reverse Proxy (Recommended)
+### 5. SSL/TLS Certificate
 
-#### Option A: Nginx Reverse Proxy
+The site configuration in step 6 loads the certificate files, and nginx
+refuses to start with a site whose certificate does not exist yet. Obtain the
+certificate first.
 
-Install Nginx:
+Install Nginx and Certbot:
 
 ```bash
-sudo apt install nginx -y
+sudo apt install nginx certbot python3-certbot-nginx -y
 ```
+
+Make sure the DNS record for `maven.yourdomain.com` points at this server and
+port 80 is open (step 4). Then obtain a certificate from Let's Encrypt:
+
+```bash
+sudo certbot certonly --nginx -d maven.yourdomain.com --deploy-hook "systemctl reload nginx"
+```
+
+`certonly` writes the certificate under
+`/etc/letsencrypt/live/maven.yourdomain.com/` without changing your nginx
+configuration. The deploy hook is saved with the certificate and reloads
+nginx after each renewal, so nginx serves the renewed certificate.
+
+### 6. Deploy with Reverse Proxy (Recommended)
+
+#### Option A: Nginx Reverse Proxy
 
 Create Nginx configuration (`/etc/nginx/sites-available/maven-repo`):
 
@@ -152,15 +170,6 @@ Enable the site:
 sudo ln -s /etc/nginx/sites-available/maven-repo /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
-```
-
-### 6. SSL/TLS Certificate
-
-Using Let's Encrypt:
-
-```bash
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d maven.yourdomain.com
 ```
 
 ### 7. Start the Repository
