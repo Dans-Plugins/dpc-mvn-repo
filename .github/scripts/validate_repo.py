@@ -9,7 +9,8 @@ Two things leave this repository:
 * the Nexus image (Dockerfile) and the XML templates people paste into their
   Maven setup.
 
-This script checks the workflow contracts and the template syntax. It needs
+This script checks the workflow contracts and the template syntax, and that
+.env.example documents exactly the variables docker-compose.yml reads. It needs
 only PyYAML and the standard library, reads no secrets, and talks to nothing.
 Exit status is non-zero if any check fails; every failure is printed.
 
@@ -178,6 +179,33 @@ def check_compose_cli():
                 fail(path, f"line {number} calls 'docker-compose'; use 'docker compose' (Compose v2)")
 
 
+def check_env_parity():
+    """Every variable documented in .env.example must be interpolated by
+    docker-compose.yml with the same default, and vice versa. A documented
+    key the compose file never reads is silently ignored, and a default that
+    differs from the example means an unmodified copy of .env changes the
+    service."""
+    env_path = ROOT / ".env.example"
+    compose_path = ROOT / "docker-compose.yml"
+    documented = dict(re.findall(r"^([A-Z_]+)=(.*)$", env_path.read_text(encoding="utf-8"), re.M))
+    compose = "".join(
+        line
+        for line in compose_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        if not line.lstrip().startswith("#")
+    )
+    interpolated = {}
+    for name, default in re.findall(r"\$\{([A-Z_]+)(?::-([^}]*))?\}", compose):
+        interpolated.setdefault(name, default)
+    for name, value in sorted(documented.items()):
+        if name not in interpolated:
+            fail(env_path, f"{name} is documented but docker-compose.yml never reads it")
+        elif interpolated[name] != value:
+            fail(compose_path, f"${{{name}}} defaults to {interpolated[name]!r}, but .env.example says {value!r}")
+    for name in sorted(set(interpolated) - set(documented)):
+        fail(compose_path, f"${{{name}}} is read but not documented in .env.example")
+    return len(documented)
+
+
 def main():
     contracts = {}
     reusable = sorted(WORKFLOWS.glob("reusable-*.yml"))
@@ -203,6 +231,7 @@ def main():
     check_xml(ROOT / "pom.xml.template", fragment=True)
     check_pinned_images()
     check_compose_cli()
+    env_keys = check_env_parity()
 
     if errors:
         print("Validation failed:")
@@ -211,7 +240,7 @@ def main():
         return 1
     print(
         f"OK: {len(contracts)} reusable workflow(s), {len(examples)} example caller(s), "
-        "2 XML template(s)"
+        f"2 XML template(s), {env_keys} .env.example variable(s)"
     )
     return 0
 
