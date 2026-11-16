@@ -9,7 +9,8 @@ Two things leave this repository:
 * the Nexus image (Dockerfile) and the XML templates people paste into their
   Maven setup.
 
-This script checks the workflow contracts and the template syntax. It needs
+This script checks the workflow contracts and the template syntax, and that
+.env.example documents exactly the variables docker-compose.yml reads. It needs
 only PyYAML and the standard library, reads no secrets, and talks to nothing.
 Exit status is non-zero if any check fails; every failure is printed.
 
