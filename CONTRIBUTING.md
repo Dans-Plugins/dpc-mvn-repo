@@ -116,9 +116,12 @@ Before submitting a PR:
    so it will not parse as-is — review that one by reading.
 
 8. If you changed a Maven server or repository id, confirm every id still agrees
-   across the four files that declare one. Every `<repository>` and
-   `<pluginRepository>` id must have a matching `<server>` id, or Maven resolves
-   anonymously and fails with 401 once anonymous access is disabled:
+   across the files that declare one. Every `<repository>`, `<snapshotRepository>`,
+   `<pluginRepository>`, and `<mirror>` id must have a matching `<server>` id in
+   `settings.xml.template`, or Maven resolves anonymously and fails with 401 once
+   anonymous access is disabled. The validator from step 11 checks both templates,
+   every ```` ```xml ```` block in the Markdown docs, and the id the Maven publish
+   workflow deploys with; to see every occurrence:
    ```bash
    grep -rn 'dpc-maven-repo' README.md QUICKSTART.md PUBLISHING.md \
      settings.xml.template pom.xml.template
@@ -150,8 +153,9 @@ Before submitting a PR:
     request. The validator checks the reusable workflow contracts, the example
     callers against them, both XML templates, that the Nexus image is pinned
     to a release tag and digest, that no script, `Makefile` target, or doc
-    calls the standalone Compose v1 binary instead of `docker compose`, and the
-    `.env.example` parity from step 10; it needs only PyYAML:
+    calls the standalone Compose v1 binary instead of `docker compose`, the
+    Maven id parity from step 8, and the `.env.example` parity from step 10; it
+    needs only PyYAML:
     ```bash
     python3 .github/scripts/validate_repo.py
     shellcheck ./*.sh
