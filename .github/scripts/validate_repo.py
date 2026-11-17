@@ -9,8 +9,10 @@ Two things leave this repository:
 * the Nexus image (Dockerfile) and the XML templates people paste into their
   Maven setup.
 
-This script checks the workflow contracts and the template syntax, and that
-.env.example documents exactly the variables docker-compose.yml reads. It needs
+This script checks the workflow contracts and the template syntax, that
+.env.example documents exactly the variables docker-compose.yml reads, and that
+every Maven repository id in the templates, docs, and publish workflow has a
+matching <server> id in settings.xml.template. It needs
 only PyYAML and the standard library, reads no secrets, and talks to nothing.
 Exit status is non-zero if any check fails; every failure is printed.
 
@@ -179,6 +181,88 @@ def check_compose_cli():
                 fail(path, f"line {number} calls 'docker-compose'; use 'docker compose' (Compose v2)")
 
 
+REPOSITORY_TAGS = ("repository", "snapshotRepository", "pluginRepository", "mirror")
+
+
+def maven_ids(root):
+    """Return (server ids, [(tag, id)] for every repository-like element).
+    settings.xml.template declares the Maven settings namespace, so tags are
+    compared by local name."""
+    def local(tag):
+        return tag.rsplit("}", 1)[-1]
+
+    def ident(element):
+        for child in element:
+            if local(child.tag) == "id":
+                return (child.text or "").strip()
+        return None
+
+    servers, repos = set(), []
+    for element in root.iter():
+        tag = local(element.tag)
+        if tag == "server":
+            servers.add(ident(element))
+        elif tag in REPOSITORY_TAGS:
+            repos.append((tag, ident(element)))
+    return servers, repos
+
+
+def check_maven_ids():
+    """Maven sends credentials only for a repository whose id equals a
+    <server> id in settings.xml. Every repository, mirror, and deploy target
+    this repository tells people to configure must therefore use an id that
+    settings.xml.template declares as a server; otherwise resolution goes out
+    anonymously and fails with 401 once anonymous access is disabled, with no
+    error in this repository. Checked: both XML templates, every ```xml block
+    in the Markdown docs, and the server-id / altDeploymentRepository id the
+    Maven publish workflow deploys with."""
+    settings_path = ROOT / "settings.xml.template"
+    try:
+        known, repos = maven_ids(ET.fromstring(settings_path.read_text(encoding="utf-8")))
+    except ET.ParseError:
+        return 0  # already reported by check_xml
+    if not known:
+        fail(settings_path, "declares no <server> id")
+        return 0
+    sources = [(settings_path, None, repos)]
+
+    pom_path = ROOT / "pom.xml.template"
+    try:
+        sources.append((pom_path, None, maven_ids(ET.fromstring(
+            "<fragment>" + pom_path.read_text(encoding="utf-8") + "</fragment>"))[1]))
+    except ET.ParseError:
+        pass  # already reported by check_xml
+
+    for path in sorted([*ROOT.glob("*.md"), *ROOT.glob("docs/*.md")]):
+        text = path.read_text(encoding="utf-8")
+        for block in re.finditer(r"^```xml\n(.*?)^```", text, re.S | re.M):
+            line = text.count("\n", 0, block.start()) + 1
+            try:
+                root = ET.fromstring("<fragment>" + block.group(1) + "</fragment>")
+            except ET.ParseError as exc:
+                fail(path, f"xml block at line {line} is not well-formed: {exc}")
+                continue
+            servers, repos = maven_ids(root)
+            repos += [("server", sid) for sid in servers]
+            sources.append((path, line, repos))
+
+    for path in sorted(WORKFLOWS.glob("reusable-publish*.yml")):
+        text = path.read_text(encoding="utf-8")
+        repos = [("server-id", v) for v in re.findall(r"^\s*server-id:\s*(\S+)", text, re.M)]
+        repos += [("altDeploymentRepository", v) for v in re.findall(r"-DaltDeploymentRepository=\"?([^:\"\s]+)::", text)]
+        sources.append((path, None, repos))
+
+    checked = 0
+    for path, line, repos in sources:
+        where = f"xml block at line {line}: " if line else ""
+        for tag, ident in repos:
+            checked += 1
+            if ident not in known:
+                fail(path, f"{where}<{tag}> id {ident!r} has no matching <server> id in "
+                           f"settings.xml.template ({', '.join(sorted(known))})")
+    return checked
+
+
 def check_env_parity():
     """Every variable documented in .env.example must be interpolated by
     docker-compose.yml with the same default, and vice versa. A documented
@@ -232,6 +316,7 @@ def main():
     check_pinned_images()
     check_compose_cli()
     env_keys = check_env_parity()
+    maven_refs = check_maven_ids()
 
     if errors:
         print("Validation failed:")
@@ -240,7 +325,8 @@ def main():
         return 1
     print(
         f"OK: {len(contracts)} reusable workflow(s), {len(examples)} example caller(s), "
-        f"2 XML template(s), {env_keys} .env.example variable(s)"
+        f"2 XML template(s), {env_keys} .env.example variable(s), "
+        f"{maven_refs} Maven id reference(s)"
     )
     return 0
 
