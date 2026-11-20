@@ -308,8 +308,10 @@ def check_makefile():
     for line in re.findall(r"^\.PHONY:(.*)$", text, re.M):
         phony.update(line.split())
     for name, rest in rules.items():
-        if not re.search(r"## \S", rest):
-            fail(path, f"target '{name}' has no '## ' help comment, so 'make help' omits it")
+        # Mirror the help target's own grep, which matches only [a-zA-Z_-] names.
+        if not re.fullmatch(r"[a-zA-Z_-]+", name) or not re.search(r"## \S", rest):
+            fail(path, f"'make help' omits target '{name}'; it needs a '## ' help comment "
+                       "and a name of only letters, '_' and '-'")
         if name not in phony:
             fail(path, f"target '{name}' is not declared .PHONY")
     for name in sorted(phony - set(rules)):
