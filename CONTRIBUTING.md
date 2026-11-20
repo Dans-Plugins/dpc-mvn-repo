@@ -154,8 +154,10 @@ Before submitting a PR:
     callers against them, both XML templates, that the Nexus image is pinned
     to a release tag and digest, that no script, `Makefile` target, or doc
     calls the standalone Compose v1 binary instead of `docker compose`, the
-    Maven id parity from step 8, and the `.env.example` parity from step 10; it
-    needs only PyYAML:
+    Maven id parity from step 8, the `.env.example` parity from step 10, and
+    that every `Makefile` target has a `## ` help comment (so `make help` lists
+    it) and a `.PHONY` entry and every `make <target>` shown in the docs exists;
+    it needs only PyYAML:
     ```bash
     python3 .github/scripts/validate_repo.py
     shellcheck ./*.sh

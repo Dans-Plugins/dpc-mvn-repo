@@ -10,10 +10,12 @@ Two things leave this repository:
   Maven setup.
 
 This script checks the workflow contracts and the template syntax, that
-.env.example documents exactly the variables docker-compose.yml reads, and that
+.env.example documents exactly the variables docker-compose.yml reads, that
 every Maven repository id in the templates, docs, and publish workflow has a
-matching <server> id in settings.xml.template. It needs
-only PyYAML and the standard library, reads no secrets, and talks to nothing.
+matching <server> id in settings.xml.template, and that every Makefile target
+is listed by `make help` and .PHONY and every `make <target>` the docs show
+exists. It needs only PyYAML and the standard library, reads no secrets, and
+talks to nothing.
 Exit status is non-zero if any check fails; every failure is printed.
 
 Run locally:  python3 .github/scripts/validate_repo.py
@@ -290,6 +292,42 @@ def check_env_parity():
     return len(documented)
 
 
+def check_makefile():
+    """`make help` lists only targets whose rule line carries a `## ` comment,
+    a target missing from .PHONY stops running once a file of the same name
+    exists, and a `make <target>` in the docs that the Makefile does not define
+    fails with 'No rule to make target'. Checked: every rule has a help
+    comment, .PHONY names exactly the rules, and every `make <target>` in a
+    fenced code block or inline code span of the Markdown docs is a rule."""
+    path = ROOT / "Makefile"
+    text = path.read_text(encoding="utf-8")
+    rules = {}
+    for name, rest in re.findall(r"^([A-Za-z0-9_-]+):(?!=)(.*)$", text, re.M):
+        rules[name] = rest
+    phony = set()
+    for line in re.findall(r"^\.PHONY:(.*)$", text, re.M):
+        phony.update(line.split())
+    for name, rest in rules.items():
+        if not re.search(r"## \S", rest):
+            fail(path, f"target '{name}' has no '## ' help comment, so 'make help' omits it")
+        if name not in phony:
+            fail(path, f"target '{name}' is not declared .PHONY")
+    for name in sorted(phony - set(rules)):
+        fail(path, f".PHONY names '{name}', which has no rule")
+
+    referenced = 0
+    for doc in sorted([*ROOT.glob("*.md"), *ROOT.glob("docs/*.md")]):
+        text = doc.read_text(encoding="utf-8")
+        spans = [m.group(1) for m in re.finditer(r"^\s*```[^\n]*\n(.*?)^\s*```", text, re.S | re.M)]
+        spans += re.findall(r"(?<!`)`([^`\n]+)`(?!`)", text)
+        for span in spans:
+            for target in re.findall(r"(?:^|[\s;&|(])make\s+([A-Za-z0-9_-]+)(?![\w=-])", span, re.M):
+                referenced += 1
+                if target not in rules:
+                    fail(doc, f"documents 'make {target}', but the Makefile has no such target")
+    return len(rules), referenced
+
+
 def main():
     contracts = {}
     reusable = sorted(WORKFLOWS.glob("reusable-*.yml"))
@@ -317,6 +355,7 @@ def main():
     check_compose_cli()
     env_keys = check_env_parity()
     maven_refs = check_maven_ids()
+    make_rules, make_refs = check_makefile()
 
     if errors:
         print("Validation failed:")
@@ -326,7 +365,8 @@ def main():
     print(
         f"OK: {len(contracts)} reusable workflow(s), {len(examples)} example caller(s), "
         f"2 XML template(s), {env_keys} .env.example variable(s), "
-        f"{maven_refs} Maven id reference(s)"
+        f"{maven_refs} Maven id reference(s), {make_rules} Makefile target(s), "
+        f"{make_refs} documented make command(s)"
     )
     return 0
 
